@@ -1,11 +1,15 @@
-import asyncio, socket
-from manager import Session, User
+import asyncio
 import utils
+
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.styles import Style
 from threading import Thread
 
+from manager import Session, User
+
+CONNECTION_LIMIT = 20
+BUFFERSIZE = 1024 # 1kb
 session = Session()
 
 style = Style.from_dict({
@@ -17,29 +21,19 @@ style = Style.from_dict({
     'underline':     'underline',
 })
 
-
-async def handle_client(client):
-    loop = asyncio.get_event_loop()
-    running = True
-    username = (await loop.sock_recv(client, 2**18))
-    session.targets.append(User(name=username.capitalize(), ip=client.getpeername()[0], handle=client))
-    #while not running:
-    #    request = (await loop.sock_recv(client, 2**18)).decode('utf8')
-    #    response = request
-    #    await loop.sock_sendall(client, response.encode('utf8'))
+async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+    username = await reader.read(BUFFERSIZE)
+    client_addr = writer.get_extra_info("peername")
+    client_socket = writer.get_extra_info("socket")
+    session.targets.append(User(username.capitalize(), client_addr, client_socket))
 
 async def bind():
     print('x')
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('127.0.0.1', 9035))
-    server.listen(2**18)
-    server.setblocking(False)
 
-    loop = asyncio.get_event_loop()
+    server = await asyncio.start_server(handle_client, "0.0.0.0", 9035)
+    async with server:
+        await server.serve_forever()
 
-    while True:
-        client, _ = await loop.sock_accept(server)
-        loop.create_task(handle_client(client))
 
 def cli():
     while True:
@@ -51,12 +45,16 @@ def cli():
         except EOFError:
             break
 
+async def main(): 
+    threads = []
+    threads.append(Thread(target=cli))
+    threads.append(Thread(target=asyncio.run, args=(bind(),)))
 
-x=Thread(target=cli)
-y=Thread(target=asyncio.run, args=(bind(),))
+    for t in threads:
+        t.start()
 
-x.start()
-y.start()
+    for t in threads:
+        t.join()
 
-x.join()
-y.join()
+if __name__ == "__main__":
+    asyncio.run(main())
