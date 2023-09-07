@@ -7,7 +7,12 @@ edition = "2021"
 
 [dependencies]
 aes-gcm = "0.10.2"
+litcrypt = "0.3.0"
 rand = "0.8.5"
 rsa = { version = "0.9.2", features = ["pkcs5"] }
+sysinfo = "0.29.10"
 tungstenite = "0.20.0"
 url = "2.4.1"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.51.0"
