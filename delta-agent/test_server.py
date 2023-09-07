@@ -1,22 +1,16 @@
-#!/usr/bin/env python
-
-import asyncio
-import websockets
+import socket
 import rsa
-import os
 
 pub, priv = rsa.newkeys(1024)
 
-async def echo(websocket, path):
-    await websocket.recv()
-    await websocket.send(rsa.PublicKey.save_pkcs1(pub))
-    aeskey = await websocket.recv()
-    print(rsa.decrypt(aeskey, priv))
+s = socket.socket()
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(("127.0.0.1", 9035))
+s.listen()
+client, addr = s.accept()
 
-start_server = websockets.serve(echo, "0.0.0.0", os.environ.get('PORT') or 8080)
+print(addr)
 
-print("WebSockets echo server starting", flush=True)
-asyncio.get_event_loop().run_until_complete(start_server)
-
-print("WebSockets echo server running", flush=True)
-asyncio.get_event_loop().run_forever()
+client.send(rsa.PublicKey.save_pkcs1(pub))
+print(rsa.decrypt(client.recv(1024), priv))
+print(client.recv(1024))

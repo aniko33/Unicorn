@@ -13,6 +13,7 @@ rsa = { version = "0.9.2", features = ["pkcs5"] }
 sysinfo = "0.29.10"
 tungstenite = "0.20.0"
 url = "2.4.1"
+winapi = { version = "0.3.9", features = ["ntdef", "minwinbase", "minwindef"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.51.0"
