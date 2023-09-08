@@ -1,7 +1,5 @@
 import socket
 
-
-
 class User():
     def __init__(self, name:bytes, ip:str, handle):
         self.name = name.decode()

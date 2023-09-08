@@ -1,4 +1,7 @@
 import os
+import asyncio
+
+from Crypto.Cipher import AES
 
 class BMKey:
     def new()->str:
@@ -16,5 +19,18 @@ class BMKey:
         return bytearray.fromhex(''.join(pure))
 
 class Cipher():
-    def __init__(self, key:str):
+    def __init__(self, key: str):
         pass
+
+class AES256GCM:
+    def __init__(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, key: bytes, iv: bytes) -> None:
+        self.reader = reader
+        self.writer = writer
+        self.cipher = AES.new(key, AES.MODE_GCM, iv=iv)
+
+    async def send(self, data: bytes):
+        await self.writer.write(self.cipher.encrypt(data))
+        self.writer.drain()
+    
+    async def recv(self, buffer: int) -> bytes:
+        return await self.cipher.decrypt(self.reader.read(buffer))
