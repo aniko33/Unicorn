@@ -1,2 +1,0 @@
-[env]
-LITCRYPT_ENCRYPT_KEY = { value = "test key" }
