@@ -2,8 +2,6 @@ import asyncio
 import rsa
 import zlib
 
-from Crypto.Random import get_random_bytes
-
 from lib.crypto import EncryptedTunnel
 
 BUFFER = 1024
