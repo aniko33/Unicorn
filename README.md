@@ -6,11 +6,11 @@
 - [ ] optimization
 
 ### TODO - Server
-- [ ] client connection
+- [x] client connection
 - [ ] connection with agents
 - [ ] clients chat
 
 ### TODO - Client
-- [ ] server connection
+- [x] server connection
 - [ ] manage agents
 - [ ] gui (TornadoFX)
