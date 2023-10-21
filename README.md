@@ -6,11 +6,14 @@
 - [ ] optimization
 
 ### TODO - Server
-- [x] client connection
+- [ ] api server
+- [ ] enable https
+- [ ] client connection
 - [ ] connection with agents
 - [ ] clients chat
 
 ### TODO - Client
-- [x] server connection
+- [ ] http client
+- [ ] server connection
 - [ ] manage agents
 - [ ] gui (TornadoFX)
