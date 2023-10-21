@@ -5,18 +5,23 @@ from Crypto.Cipher import Salsa20
 
 class EncryptedTunnel:
     def __init__(self, r: asyncio.streams.StreamReader, w: asyncio.streams.StreamWriter, key: bytes, nonce: bytes) -> None:
+        self.key = key
+        self.nonce = nonce
+
         self.r = r
         self.w = w
 
-        self.cipher = Salsa20.new(key, nonce=nonce)
-
     async def send(self, data: bytes):
-        self.w.write(self.cipher.encrypt(data))
+        cipher = Salsa20.new(self.key, self.nonce)
+
+        self.w.write(cipher.encrypt(data))
         await self.w.drain()
 
     async def recv(self, buffer: int) -> bytes:
+        cipher = Salsa20.new(self.key, self.nonce)
+
         data = await self.r.read(buffer)
-        return self.cipher.decrypt(data)
+        return cipher.decrypt(data)
     
 def get_hwid() -> str:
     if os.name == "nt":

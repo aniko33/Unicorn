@@ -70,9 +70,9 @@ class Salsa20(key: ByteArray, iv: ByteArray) : CryptoInterface {
         return decrypted
     }
 
-
     fun decrypt_UTF(data: ByteArray): String {
         val decrypted = decrypt(data)
+
         return String(decrypted, Charsets.UTF_8)
     }
 }
@@ -161,6 +161,8 @@ class RSA(priv_key: PrivateKey, pub_key: PublicKey) : CryptoInterface {
         }
     }
 }
+
+// TODO: Fix Salsa20 -> regen cipher
 
 class EncryptedTunnel(sConn: SocketTCP, encryptionSalsa: Salsa20) {
     var socket: SocketTCP

@@ -54,7 +54,7 @@ impl EncryptedTunnel {
 fn generate_fingerprint() -> String {
     rand::thread_rng()
         .sample_iter(&Alphanumeric)
-        .take(130)
+        .take(30)
         .map(char::from)
         .collect()
 }
