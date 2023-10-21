@@ -16,32 +16,39 @@ class SocketTCP(host: String, port: Int) {
 
     fun send(data: ByteArray) {
         writer.write(data)
+        writer.flush()
     }
     fun send(data: String) {
-        writer.write(data.toByteArray())
+        send(data.toByteArray())
     }
 
     fun recv(buffer: Int): ByteArray {
         val bufferArray = ByteArray(buffer)
-        val result = ByteArrayOutputStream()
-        var readed: Int;
 
-        while (reader.read(bufferArray).also { readed = it } != -1 ){
-            result.write(bufferArray, 0, readed)
+        val byteRead = reader.read(bufferArray)
+        val result = ByteArray(byteRead)
+
+        for (i in 0..<byteRead) {
+            result[i] = bufferArray[i]
         }
 
-        return result.toByteArray()
+        return result
     }
-
     fun recvString(buffer: Int): String {
-        val result = StringBuilder()
-
         val bufferArray = recv(buffer)
 
-        for (b in bufferArray) {
-            result.append(b.toInt().toChar())
-        }
+        return bytesToString(bufferArray)
+    }
 
-        return result.toString()
+    companion object {
+        fun bytesToString(data: ByteArray): String {
+            val rString = StringBuilder()
+
+            for (b in data) {
+                rString.append(b.toInt().toChar())
+            }
+
+            return rString.toString()
+        }
     }
 }

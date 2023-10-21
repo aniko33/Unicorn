@@ -1,18 +1,32 @@
 import io.*
 
-const val BUFSIZE = 1024
+const val BUFFER_SIZE = 1024
 const val HOST = "127.0.0.1"
 const val PORT = 6666
 
-// TODO: Fix recv -> sockets
-
 fun main() {
-    val client = SocketTCP(HOST, PORT)
+    print("Username: ")
+    val username = readLine()
+
+    if (username.isNullOrBlank()) {
+        println("Null or blank username")
+        return
+    }
+
     val keys = RSA.generate_keys(1024)
     val rsa = RSA(keys.private, keys.public)
 
-    client.send("ciao")
-    val r = client.recv(BUFSIZE)
+    val client = SocketTCP(HOST, PORT)
 
-    println(r)
+    val fingerprint = client.recv(BUFFER_SIZE)
+    client.send(rsa.export_public())
+
+    val salsa20Keys = rsa.decrypt(client.recv(BUFFER_SIZE))
+
+    val sKey = salsa20Keys.copyOfRange(0, 32)
+    val sIV  = salsa20Keys.copyOfRange(32, 32+8)
+
+    val encTunnel = EncryptedTunnel(client, Salsa20(sKey, sIV))
+
+    encTunnel.send(username)
 }

@@ -88,8 +88,8 @@ class RSA(priv_key: PrivateKey, pub_key: PublicKey) : CryptoInterface {
         encryption_cipher = Cipher.getInstance("RSA")
         decryption_cipher = Cipher.getInstance("RSA")
 
-        encryption_cipher.init(Cipher.ENCRYPT_MODE, priv_key)
-        decryption_cipher.init(Cipher.DECRYPT_MODE, pub_key)
+        encryption_cipher.init(Cipher.ENCRYPT_MODE, pub_key)
+        decryption_cipher.init(Cipher.DECRYPT_MODE, priv_key)
 
         private_key = priv_key
         public_key = pub_key
