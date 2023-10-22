@@ -1,6 +1,5 @@
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
-
 use typenum::consts::U10;
 use salsa20::SalsaCore;
 use salsa20::cipher::{StreamCipherCoreWrapper, StreamCipher, StreamCipherSeek};

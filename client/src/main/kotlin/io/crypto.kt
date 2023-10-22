@@ -26,20 +26,20 @@ interface CryptoInterface {
     fun decrypt(data: ByteArray): ByteArray
 }
 
-class Salsa20(key: ByteArray, iv: ByteArray) : CryptoInterface {
-    var encryption_cipher: Salsa20Engine
-    var decryption_cipher: Salsa20Engine
+class Salsa20(EncryptionKey: ByteArray, IV: ByteArray) : CryptoInterface {
+    var key: ByteArray
+    var iv: ByteArray
     init {
-        encryption_cipher = Salsa20Engine()
-        decryption_cipher = Salsa20Engine()
-
-        encryption_cipher.init(true, ParametersWithIV(KeyParameter(key), iv))
-        decryption_cipher.init(false, ParametersWithIV(KeyParameter(key), iv))
+        key = EncryptionKey
+        iv = IV
     }
 
     override fun encrypt(data: ByteArray): ByteArray {
-        val encrypted = ByteArray(data.size);
-        encryption_cipher.processBytes(data, 0, data.size, encrypted, 0)
+        val cipher = Salsa20Engine()
+        cipher.init(true, ParametersWithIV(KeyParameter(key), iv))
+
+        val encrypted = ByteArray(data.size)
+        cipher.processBytes(data, 0, data.size, encrypted, 0)
 
         return encrypted
     }
@@ -63,9 +63,12 @@ class Salsa20(key: ByteArray, iv: ByteArray) : CryptoInterface {
     }
 
     override fun decrypt(data: ByteArray): ByteArray {
+        val cipher = Salsa20Engine()
+        cipher.init(false, ParametersWithIV(KeyParameter(key), iv))
+
         val decrypted = ByteArray(data.size)
 
-        decryption_cipher.processBytes(data, 0, data.size, decrypted, 0)
+        cipher.processBytes(data, 0, data.size, decrypted, 0)
 
         return decrypted
     }
@@ -161,8 +164,6 @@ class RSA(priv_key: PrivateKey, pub_key: PublicKey) : CryptoInterface {
         }
     }
 }
-
-// TODO: Fix Salsa20 -> regen cipher
 
 class EncryptedTunnel(sConn: SocketTCP, encryptionSalsa: Salsa20) {
     var socket: SocketTCP
