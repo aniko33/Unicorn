@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--ssl", action="store_true", help="Enable HTTPS")
 parser.add_argument("-v", "--verbose", action="store_true")
 
-# Init variable
+# --- [ Init variables ] ---
 
 current_dir = "/".join(__file__.split("/")[:-1])
 config = tomllib.load(open(current_dir + "/config/config.toml", "rb"))
