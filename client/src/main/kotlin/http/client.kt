@@ -1,5 +1,0 @@
-package http
-
-class HTTPClient {
-
-}

@@ -22,14 +22,28 @@ class HTTP_SESSION:
         else:
             return False
 
-# TODO: do optimation
-
 def get_tunnel_by_fingerprint(agents: dict, fingerprint: str) -> str | None:
-    i = 0
+    agents_values = list(agents.values())
 
-    for v in list(agents.values()):
-        if fingerprint == v:
-            return list(agents.keys())[i]
-        i+=1
+    low = 0
+    high = list(agents.values())
     
-    return None
+    r = None
+    
+    while low<=high:
+        mid = (low + high) // 2
+
+        if agents_values[mid][0] < fingerprint:
+            low = mid + 1
+        
+        elif agents_values[mid][0] > fingerprint:
+            high = mid - 1
+        
+        else:
+            r = mid
+            break
+
+    if r != None:
+        return list(agents.keys())[r]
+    else:
+        return None
