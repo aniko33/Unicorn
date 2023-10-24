@@ -1,4 +1,0 @@
-package HTTP
-
-class client {
-}

@@ -109,9 +109,13 @@ fn main() -> Result<(), io::Error> {
 
     let mut enctunnel = EncryptedTunnel::new(key.as_slice(), iv.as_slice(), socket);
 
-    {
-        enctunnel.recv(&mut buffer)?;
-    }
+    loop {
+        let cmd = String::from_utf8(enctunnel.recv(&mut buffer)?).unwrap();
 
-    Ok(())
+        match cmd.as_str() {
+            "2" => enctunnel.send(b"3".to_vec())?,
+            _ => ()
+        }
+
+    }
 }

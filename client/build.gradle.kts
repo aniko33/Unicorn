@@ -1,9 +1,10 @@
 plugins {
     kotlin("jvm") version "1.9.0"
+    id("org.openjfx.javafxplugin") version "0.1.0"
     application
 }
 
-group = "unicorn.client"
+group = "org.example"
 version = "1.0"
 
 repositories {
@@ -11,8 +12,12 @@ repositories {
 }
 
 dependencies {
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     testImplementation(kotlin("test"))
+}
+
+javafx {
+    version = "11.0.2"
+    modules = listOf("javafx.controls", "javafx.graphics")
 }
 
 tasks.test {

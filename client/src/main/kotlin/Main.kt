@@ -1,9 +1,22 @@
-import io.*
-
-const val BUFFER_SIZE = 1024
-const val HOST = "127.0.0.1"
-const val PORT = 6666
+import javafx.application.Application;
+import javafx.scene.Group
+import javafx.scene.Scene
+import javafx.scene.paint.Color
+import javafx.stage.Stage
 
 fun main() {
-
+    Application.launch(App::class.java)
 }
+
+class App: Application() {
+    override fun start(stage: Stage) {
+        val root = Group()
+
+        val scene = Scene(root, Color.WHITE)
+
+        stage.scene = scene
+
+        stage.show()
+    }
+}
+

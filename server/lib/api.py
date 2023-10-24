@@ -26,7 +26,7 @@ def get_tunnel_by_fingerprint(agents: dict, fingerprint: str) -> str | None:
     agents_values = list(agents.values())
 
     low = 0
-    high = list(agents.values())
+    high = len(agents.values())
     
     r = None
     
