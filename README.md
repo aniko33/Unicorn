@@ -6,8 +6,8 @@
 - [ ] optimization
 
 ### TODO - Server
-- [ ] api server
-- [ ] enable https
+- [X] api server
+- [X] enable https
 - [ ] client connection
 - [ ] connection with agents
 - [ ] clients chat
