@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6,41 +6,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tauri App</title>
     <script type="module" src="/main.js" defer></script>
-    <style>
-      .logo.vanilla:hover {
-        filter: drop-shadow(0 0 2em #ffe21c);
-      }
-    </style>
+    <script type="module" src="main.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css"
+    />
   </head>
 
   <body>
-    <div class="container">
-      <h1>Welcome to Tauri!</h1>
+    <ul>
+      <li><a class="active" href="#home">1</a></li>
+      <li><a href="#news">2</a></li>
+      <li><a href="#contact">3</a></li>
+      <li><a href="#about">4</a></li>
+    </ul>
 
-      <div class="row">
-        <a href="https://tauri.app" target="_blank">
-          <img src="/assets/tauri.svg" class="logo tauri" alt="Tauri logo" />
-        </a>
-        <a
-          href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"
-          target="_blank"
-        >
-          <img
-            src="/assets/javascript.svg"
-            class="logo vanilla"
-            alt="JavaScript logo"
-          />
-        </a>
+    <div class="main">
+      <div class="table_div">
+        <table>
+          <tr>
+            <td id="tIndex">Host</td>
+            <td id="tIndex">Fingerprint</td>
+            <td id="tIndex">Name</td>
+          </tr>
+        </table>
       </div>
 
-      <p>Click on the Tauri logo to learn more about the framework</p>
-
-      <form class="row" id="greet-form">
-        <input id="greet-input" placeholder="Enter a name..." />
-        <button type="submit">Greet</button>
-      </form>
-
-      <p id="greet-msg"></p>
+      <div id="terminal"></div>
     </div>
   </body>
+
+  <script>
+    let term = $("#terminal").terminal(
+      [
+        {
+          open: function () {},
+        },
+        function (command) {
+          console.log(command);
+        },
+      ],
+      {
+        greetings: false,
+        height: 170,
+      }
+    );
+
+    randomcall();
+  </script>
 </html>

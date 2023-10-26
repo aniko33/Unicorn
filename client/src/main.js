@@ -15,3 +15,7 @@ window.addEventListener("DOMContentLoaded", () => {
     greet();
   });
 });
+
+function randomcall() {
+  console.error("porco dio")
+}
