@@ -2,6 +2,8 @@ const { invoke } = window.__TAURI__.tauri;
 
 let apiUri = "http://localhost:58795"
 
+/* utilities functions */
+
 async function sha256(password) {
   const msgUint8 = new TextEncoder().encode(password);                           
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);           
@@ -9,6 +11,18 @@ async function sha256(password) {
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); 
   return hashHex;
 }
+
+
+function checkSession() {
+  console.log('checking session')
+  const token = sessionStorage.getItem('token');
+  if (!token) {
+      window.location.href = 'index.html';
+  }
+}
+
+
+/* token authentification */
 
 async function fetchToken() {
   const username = document.querySelector('input[type="text"]').value;
@@ -38,40 +52,34 @@ async function fetchToken() {
   }
 }
 
-document.querySelector('form').addEventListener('submit', (event) => {
-  console.log("one more time!");
-  event.preventDefault();
-  fetchToken();
-});
+/* dashboard main functions */
+ function createGUI(){
+  let term = $("#terminal").terminal(
+    [
+      {
+        open: function () {},
+      },
+      function (command) {
+        console.log(command);
+      },
+    ],
+    {
+      greetings: false,
+      height: 170,
+    });
 
-function checkSession() {
-  const token = sessionStorage.getItem('token');
-  if (!token) {
-      window.location.href = 'index.html';
-  }
-}
+    
+ }
 
-if(window.location.pathname != '/index.html')
+/* main */
+
+if(window.location.pathname != '/index.html'){
   checkSession();
-
-
-
-let greetInputEl;
-let greetMsgEl;
-
-async function greet() {
-  greetMsgEl.textContent = await invoke("greet", { name: greetInputEl.value });
+  createGUI();
 }
-
-window.addEventListener("DOMContentLoaded", () => {
-  greetInputEl = document.querySelector("#greet-input");
-  greetMsgEl = document.querySelector("#greet-msg");
-  document.querySelector("#greet-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    greet();
+else{
+  document.querySelector('form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    fetchToken();
   });
-});
-
-function randomcall() {
-  console.error("porco dio")
 }

@@ -1,58 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="css/styles.css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Unicorn | Dashboard</title>
+    <head>
+        <meta charset="UTF-8"/>
+        <link rel="stylesheet" href="css/styles.css"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Unicorn | Dashboard</title>
 
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css"
-    />
-  </head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css"/>
+        <script src="https://kit.fontawesome.com/7d28748de9.js" crossorigin="anonymous"></script>
+    </head>
 
-  <body>
-    <ul>
-      <li><a class="active" href="#home">1</a></li>
-      <li><a href="#news">2</a></li>
-      <li><a href="#contact">3</a></li>
-      <li><a href="#about">4</a></li>
-    </ul>
+    <body>
 
-    <div class="main">
-      <div class="table_div">
-        <table>
-          <tr>
-            <td id="tIndex">Host</td>
-            <td id="tIndex">Fingerprint</td>
-            <td id="tIndex">Name</td>
-          </tr>
-        </table>
-      </div>
+        <nav>
+            <div class="navbar">
+                <div class=" nav-container">
+                    <input class="checkbox" type="checkbox" name="" id=""/>
+                    <div class="hamburger-lines">
+                        <span class="line line1"></span>
+                        <span class="line line2"></span>
+                        <span class="line line3"></span>
+                    </div>
+                    <div class="logo">
+                        <h1>Unicorn C2</h1>
+                    </div>
+                    <div class="menu-items">
+                        <li>
+                            <a href="#">
+                                <i class="fa-solid fa-table-columns"></i>
+                                Dashboard</a>
+                        </li>
+                        <li>
+                            <a href="#">
+                                <i class="fa-solid fa-cube"></i>
+                                Generate payload</a>
+                        </li>
+                        <li>
+                            <a href="#">empty</a>
+                        </li>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <hr>
+        <div class="main">
 
-      <div id="terminal"></div>
-    </div>
-  </body>
-  <script type="module" src="js/main.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/jquery"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"></script>
-  <script>
-    let term = $("#terminal").terminal(
-      [
-        {
-          open: function () {},
-        },
-        function (command) {
-          console.log(command);
-        },
-      ],
-      {
-        greetings: false,
-        height: 170,
-      }
-    );
+            <h1>
+                Dashboard
+            </h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th id="tIndex">
+                            <i class="fa-solid fa-computer"></i>
+                            Host</th>
+                        <th id="tIndex">
+                            <i class="fa-solid fa-fingerprint"></i>
+                            Fingerprint</th>
+                        <th id="tIndex">
+                            <i class="fa-solid fa-user"></i>
+                            Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td id="tIndex">Host</td>
+                        <td id="tIndex">ingerprint</td>
+                        <td id="tIndex">
+                            Name</td>
+                    </tr>
+                </tbody>
+            </table>
 
-    randomcall();
-  </script>
+
+            <div id="terminal"></div>
+        </div>
+    </body>
+    <script type="module" src="js/main.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"></script>
 </html>

@@ -18,7 +18,7 @@
   .box {
     position: relative;
     width: 400px;
-    height: 470px;
+    height: 400px;
     background: #1c1c1c;
     border-radius: 18px;
     overflow: hidden;
@@ -35,9 +35,9 @@
       0deg,
       transparent,
       transparent,
-      #45f3ff,
-      #45f3ff,
-      #45f3ff
+      #88ff00,
+      #88ff00,
+      #88ff00
     );
     z-index: 1;
     transform-origin: bottom right;
@@ -55,9 +55,9 @@
       0deg,
       transparent,
       transparent,
-      #ffff00,
-      #ffff00,
-      #ffff00
+      #88ff00,
+      #88ff00,
+      #88ff00
     );
     z-index: 1;
     transform-origin: bottom right;
@@ -82,9 +82,9 @@
       0deg,
       transparent,
       transparent,
-      #fc0f8d,
-      #fc0f8d,
-      #fc0f8d
+      #88ff00,
+      #88ff00,
+      #88ff00
     );
     z-index: 1;
     transform-origin: bottom right;
@@ -194,6 +194,7 @@
   }
   
   .box form input[type="submit"] {
+    margin-left: auto;
     border: none;
     outline: none;
     padding: 9px 25px;
@@ -203,12 +204,12 @@
     border-radius: 7px;
     font-weight: 600;
     width: 100px;
-    margin-top: 10px;
+    margin-top: 30px;
     transition: 0.6s;
   }
   
   .box form input[type="submit"]:hover {
-    background-color: #31e1f7;
+    background-color: #88ff00;
   }
   
   .box form input[type="submit"]:active {

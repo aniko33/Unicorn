@@ -2,7 +2,7 @@
 
 
 body {
-  background-color: #323232;
+  background: #23242a;
 }
 
 th,
@@ -23,9 +23,12 @@ td {
 }
 
 .main {
-  margin-left: 25%;
   padding: 1px 16px;
   height: 100%;
+}
+
+.main * {
+  color : #fafafa
 }
 
 ul {
@@ -47,7 +50,7 @@ li a {
 }
 
 li a.active {
-  background-color: #04aa6d;
+  background-color: #88ff00;
   color: white;
 }
 
@@ -59,8 +62,10 @@ li a:hover:not(.active) {
 #terminal {
   position: fixed;
   margin-bottom: 20px;
-  width: 73%;
+  width:95%;
   bottom: 0;
+  z-index :-1;
+  border: 1px solid #88ff00
 }
 
 table {
@@ -68,3 +73,176 @@ table {
   width: 100%;
 }
 
+/* Navbar styles */
+
+.navbar {
+  width: 100%;
+  box-shadow: 0 1px 4px rgb(146 161 176 / 15%);
+}
+
+.nav-container {
+  max-width: 1050px;
+  width: 90%;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar .menu-items {
+  display: flex;
+}
+
+.navbar .nav-container li {
+  list-style: none;
+}
+
+.navbar .nav-container a {
+  text-decoration: none;
+  color: #fafafa;
+  font-weight: 500;
+  font-size: 1.2rem;
+  padding: 0.7rem;
+}
+
+.navbar .nav-container a:hover{
+    font-weight: bolder;
+}
+
+.nav-container {
+  display: block;
+  position: relative;
+  height: 60px;
+  margin: 0px;
+}
+
+.nav-container .checkbox {
+  position: absolute;
+  display: block;
+  height: 32px;
+  width: 32px;
+  top: 20px;
+  left: 20px;
+  z-index: 5;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.nav-container .hamburger-lines {
+  display: block;
+  height: 26px;
+  width: 32px;
+  position: absolute;
+  top: 17px;
+  left: 20px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.nav-container .hamburger-lines .line {
+  display: block;
+  height: 2px;
+  width: 100%;
+  border-radius: 10px;
+  background: #fcfcfc;
+}
+
+.nav-container .hamburger-lines .line1 {
+  transform-origin: 0% 0%;
+  transition: transform 0.4s ease-in-out;
+}
+
+.nav-container .hamburger-lines .line2 {
+  transition: transform 0.2s ease-in-out;
+}
+
+.nav-container .hamburger-lines .line3 {
+  transform-origin: 0% 100%;
+  transition: transform 0.4s ease-in-out;
+}
+
+.navbar .menu-items {
+  padding-top: 60px;
+  
+  background-color: #1c1c1c;
+  height: 100vh;
+  width: 20%;
+  transform: translate(-150%);
+  display: flex;
+  flex-direction: column;
+
+  transition: transform 0.5s ease-in-out;
+  text-align: center;
+}
+
+.navbar .menu-items li {
+  margin-bottom: 1.2rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.logo {
+  position: absolute;
+  
+  right: 15px;
+  font-size: 1.2rem;
+  color: #fafafa;
+}
+
+.nav-container input[type="checkbox"]:checked ~ .menu-items {
+  transform: translateX(0);
+}
+
+.nav-container input[type="checkbox"]:checked ~ .hamburger-lines .line1 {
+  transform: rotate(45deg);
+}
+
+.nav-container input[type="checkbox"]:checked ~ .hamburger-lines .line2 {
+  transform: scaleY(0);
+}
+
+.nav-container input[type="checkbox"]:checked ~ .hamburger-lines .line3 {
+  transform: rotate(-45deg);
+}
+
+
+
+/* table styles */
+
+table {
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: normal;
+  border: none;
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 100%;
+  white-space: nowrap;
+  
+}
+
+td,  th {
+  text-align: center;
+  padding: 8px;
+}
+
+ td {
+  border-right: 1px solid #f8f8f8;
+  font-size: 12px;
+}
+
+thead th {
+  color: #ffffff;
+  background: #203c00;
+}
+
+thead th:nth-child(odd) {
+  color: #ffffff;
+  background: #326033;
+}
+
+ tr:nth-child(even) {
+  background: #2d2d2d;
+}
