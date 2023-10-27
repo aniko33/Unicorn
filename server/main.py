@@ -66,7 +66,7 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
             if password == hashlib.sha256(whitelist_users[username].encode()).hexdigest():
                 # Generate & add session
                 session = http_session.add_session(request.remote_addr)
-            
+                return jsonify({"session": session[1]})
             else:
                 return jsonify({"error": "Username of password invalid"}), 401
     
@@ -182,7 +182,7 @@ async def main():
     else:
         https_files = (current_dir + "/config/website.crt", current_dir + "/config/private.key")
 
-    threading.Thread(target=server_api, args=('127.0.0.1', 6666, False, https_files)).start()
+    threading.Thread(target=server_api, args=('127.0.0.1', config.get("api").get("port"), False, https_files)).start()
 
     # Looping server
     async with server_victims:

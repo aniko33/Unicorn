@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unicorn | Dashboard</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css"
+    />
+  </head>
+
+  <body>
+    <ul>
+      <li><a class="active" href="#home">1</a></li>
+      <li><a href="#news">2</a></li>
+      <li><a href="#contact">3</a></li>
+      <li><a href="#about">4</a></li>
+    </ul>
+
+    <div class="main">
+      <div class="table_div">
+        <table>
+          <tr>
+            <td id="tIndex">Host</td>
+            <td id="tIndex">Fingerprint</td>
+            <td id="tIndex">Name</td>
+          </tr>
+        </table>
+      </div>
+
+      <div id="terminal"></div>
+    </div>
+  </body>
+  <script type="module" src="js/main.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"></script>
+  <script>
+    let term = $("#terminal").terminal(
+      [
+        {
+          open: function () {},
+        },
+        function (command) {
+          console.log(command);
+        },
+      ],
+      {
+        greetings: false,
+        height: 170,
+      }
+    );
+
+    randomcall();
+  </script>
+</html>
