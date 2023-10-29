@@ -1,5 +1,8 @@
 [whitelist]
 aniko = "secretpasswd1234"
 
-[api]
-port = "58795"
+[http]
+host = "127.0.0.1:6666"
+
+[agent]
+host = "127.0.0.1:8888"

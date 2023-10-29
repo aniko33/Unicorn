@@ -16,13 +16,13 @@ class HTTP_SESSION:
         ip = list(self.sessions.keys())[list(self.sessions.values()).index(session)]
         self.sessions.pop(ip)
 
-    def check(self, ip, session) -> bool:
+    def exist(self, ip, session) -> bool:
         if session == self.sessions[ip]:
             return True
         else:
             return False
 
-def get_tunnel_by_fingerprint(agents: dict, fingerprint: str) -> str | None:
+def get_agent_by_fingerprint(agents: dict, fingerprint: str) -> str | None:
     agents_values = list(agents.values())
 
     low = 0
