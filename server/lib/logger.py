@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import sys
-import time
 
 def ansi(code: int) -> str:
     return f"\033[38;5;{code}m"
@@ -25,13 +24,13 @@ def debug(msg: str, end = '\n'):
     sys.stderr.write(f"[{_debug} DEBUG {_reset}:: {_time + current_time() + _reset} ]\t{msg}"+end)
 
 def info(msg: str, end = '\n'):
-    print(f"[{_info} INFO {_reset}:: {_time + current_time() + _reset} ]\t{msg}"+end)
+    sys.stderr.write(f"[{_info} INFO {_reset}:: {_time + current_time() + _reset} ]\t{msg}"+end)
 
 def warn(msg: str, end = '\n'):
-    print(f"[{_warn} WARN {_reset}:: {_time + current_time() + _reset} ]\t{msg}"+end)
+    sys.stderr.write(f"[{_warn} WARN {_reset}:: {_time + current_time() + _reset} ]\t{msg}"+end)
 
 def error(msg: str, end = '\n'):
     sys.stdout.write(f"[{_error} ERROR {_reset}:: {_time + current_time() + _reset} ]\t{msg}"+end)
 
 def error(msg: str, end = '\n'):
-    sys.stdout.write(f"[{_fatal} FATAL {_reset}:: {_time + current_time() + _reset} ]\t{msg}"+end)
+    sys.stdout.write(f"[{_fatal} FATAL ERROR {_reset}:: {_time + current_time() + _reset} ]\t{msg}"+end)

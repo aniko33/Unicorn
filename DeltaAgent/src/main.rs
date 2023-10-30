@@ -12,13 +12,13 @@ use rsa::{Pkcs1v15Encrypt, RsaPublicKey};
 // TODO: add commands
 
 const BUFFER: usize = 1024;
-
 struct EncryptedTunnel {
     _key: Vec<u8>,
     _iv: Vec<u8>,
     cipher: StreamCipherCoreWrapper<SalsaCore<U10>>,
     socket: TcpStream,
 }
+
 impl EncryptedTunnel {
     fn new(key: &[u8], iv: &[u8], socket: TcpStream) -> Self {
         let cipher = Salsa20::new(key.into(), iv.into());

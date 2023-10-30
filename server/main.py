@@ -153,7 +153,7 @@ async def handle_agents(r: asyncio.streams.StreamReader, w: asyncio.streams.Stre
     # Get a fingerprint (random string)
     fingerprint = await r.read(server_cfg.BUFSIZE)
 
-    logger.info(f"Agent ({PEERNAME}): {fingerprint}")
+    logger.info(f"Agent ({PEERNAME}) fingerprint: {fingerprint}")
 
     # Generate rsa keys
     # will be used for key exchange + nonce to start communicating only with Salsa20
@@ -161,16 +161,14 @@ async def handle_agents(r: asyncio.streams.StreamReader, w: asyncio.streams.Stre
     public_key, private_key = rsa.newkeys(1024) 
     public_key_pem = rsa.PublicKey.save_pkcs1(public_key)
 
-    logger.success(f"RSA key generated\n"+public_key_pem.decode())
-
     w.write(public_key_pem)
     await w.drain()
 
     logger.info(f"Agent ({PEERNAME}): RSA key sended")
 
     # Gets the RSA-encrypted string containing the key and nonce
-    decrypted = rsa.decrypt(await r.read(server_cfg.BUFSIZE, private_key))
-    decompressed = zlib.decompress(decrypted).split(b"<SPR>")
+    decrypted = rsa.decrypt(await r.read(server_cfg.BUFSIZE), private_key)
+    decompressed = zlib.decompress(decrypted)
     
     key, nonce = decompressed.split(b"<SPR>")
 
