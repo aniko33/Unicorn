@@ -16,8 +16,7 @@ fn connect(url: &str, username: &str, password: &str) -> bool {
         "username": {},
         "password": {}
     }}
-    "#,
-            username, password
+    "#, username, password
         )))
         .send()
         .unwrap();

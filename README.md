@@ -12,8 +12,8 @@
 - [ ] connection with agents
 - [ ] clients chat
 
-### TODO - Client
+### TODO - Client (CLI - GUI)
 - [ ] http client
 - [ ] server connection
 - [ ] manage agents
-- [ ] gui (TornadoFX)
+- [ ] clients chat
