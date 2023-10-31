@@ -3,11 +3,11 @@
 # Unicorn - C2 Framework
 Unicorn - C2 extensible for post-explotation and remote control
 
-Authors: @aniko33, @unitythecoder
+Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github.com/UnityTheCoder)
 
 *Working in progress...*
 
-<img src=".img/logo.jpg" width=60%>
+<img src=".img/logo.jpg" width=40%>
 
 </div>
 
