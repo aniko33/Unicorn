@@ -29,6 +29,44 @@ def _rline_start():
 
 ###### FINISH READLINE SETUP ######
 
+_reset_ansi = "\033[38;5;0m"
+
+def clear():
+    if os.name == "nt":
+        os.system("cls")
+    else:
+        os.system("clear")
+
+def table(headers: list, rows: list, style_c="-", spaced = 2):
+    # Calculates the maximum width for each column
+    max_widths = [len(header) for header in headers]
+    for row in rows:
+        if len(row) != len(headers):
+            raise
+        for i, cell in enumerate(row):
+            max_widths[i] = max(max_widths[i], len(cell))
+
+    print()
+    
+    if spaced <= 0:
+        # Priting headers and separators
+        print("\t".join("{0:{1}}".format(header, max_widths[i]) for i, header in enumerate(headers)))
+        print("\t".join(style_c * width for width in max_widths))
+
+        # Priting rows
+        for row in rows:
+            print("\t".join("{0:{1}}".format(cell, max_widths[i]) for i, cell in enumerate(row)))
+    else:
+        # Priting headers and separators
+        print((" " * spaced) + ("\t".join("{0:{1}}".format(header, max_widths[i]) for i, header in enumerate(headers))))
+        print((" " * spaced) + ("\t".join(style_c * width for width in max_widths)))
+
+        for row in rows:
+            # Priting rows
+            print((" " * spaced) + ("\t".join("{0:{1}}".format(cell, max_widths[i]) for i, cell in enumerate(row))))
+
+    print()
+
 def ansi_color(code: int) -> str:
     return f"\033[38;5;{code}m"
 
