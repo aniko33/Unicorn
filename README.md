@@ -1,7 +1,7 @@
 <div align="center">
 
 # Unicorn - C2 Framework
-Unicorn - C2 extensible for post-explotation and remote control
+*C2 extensible for post-explotation and remote control*
 
 Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github.com/UnityTheCoder)
 
