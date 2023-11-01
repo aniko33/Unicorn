@@ -25,6 +25,9 @@ class HTTP_SESSION:
 def get_agent_by_fingerprint(agents: dict, fingerprint: str) -> str | None:
     agents_values = list(agents.values())
 
+    if len(agents_values) <= 0:
+        return None
+    
     low = 0
     high = len(agents.values())
     
@@ -33,10 +36,10 @@ def get_agent_by_fingerprint(agents: dict, fingerprint: str) -> str | None:
     while low<=high:
         mid = (low + high) // 2
 
-        if agents_values[mid][0] < fingerprint:
+        if agents_values[mid][0].decode() < fingerprint:
             low = mid + 1
         
-        elif agents_values[mid][0] > fingerprint:
+        elif agents_values[mid][0].decode() > fingerprint:
             high = mid - 1
         
         else:

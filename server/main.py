@@ -106,6 +106,18 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
         else:
             logger.info(f"{request.remote_addr}: invalid session ({session})")
             return jsonify({"error": "Invalid session"})
+        
+    @app_api.route("/exist_agent", methods=["POST"])
+    async def check_agent_exist():
+        json_body = request.json
+
+        SESSION = json_body["session"]
+        AGENT_FINGERPRINT = json_body["fingerprint"]
+
+        if http_session.exist(request.remote_addr, SESSION):
+            agent_addr = api.get_agent_by_fingerprint(server_cfg.AGENTS, AGENT_FINGERPRINT)
+            
+            return jsonify(not (agent_addr is None))
 
     # >>> [ SEND_COMMAND ] <<<
 
@@ -113,8 +125,8 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
     async def agent_command():
         json_body: dict = request.get_json()
         
-        AGENT_FINGERPRINT = json_body["fingerprint"]
         COMMAND = json_body["command"]
+        AGENT_FINGERPRINT = json_body["fingerprint"]
 
         key_agent = api.get_agent_by_fingerprint(server_cfg.AGENTS, AGENT_FINGERPRINT)
         
