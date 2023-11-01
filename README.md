@@ -3,7 +3,7 @@
 # Unicorn - C2 Framework
 *C2 extensible for post-explotation and remote control*
 
-Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github.com/UnityTheCoder)
+Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github.com/UnityTheCoder), [@anywayzz](https://github.com/anywayzz)
 
 *Working in progress...*
 
