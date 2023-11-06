@@ -35,19 +35,19 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 > Written in Rust
 
 ### TODO - Agent
-- [ ] add commands
+- [X] add commands
 - [ ] clean code
 - [ ] optimization
 
 ### TODO - Server
 - [X] api server
 - [X] enable https
-- [ ] client connection
-- [ ] connection with agents
+- [X] client connection
+- [X] connection with agents
 - [ ] clients chat
 
 ### TODO - Client (CLI - GUI)
 - [X] http client
 - [X] server connection
-- [ ] manage agents
+- [X] manage agents
 - [ ] clients chat
