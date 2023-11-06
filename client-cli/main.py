@@ -6,8 +6,6 @@ from lib import interactive
 from lib.interactive import ansi_color, _reset_ansi, clear
 from lib import http
 
-PROMPT = ansi_color(4, 4) + "Unicorn" + _reset_ansi + " > "
-SELECTED_AGENT = None
 
 http_api: http.HTTP_API = None
 
@@ -22,9 +20,13 @@ def server_connection() -> http.HTTP_API:
         ]
     )["protocol"]
 
-    host = input("Host (ip:port): ")
-    username = input("Username: ")
-    password = getpass.getpass()
+    # host = input("Host (ip:port): ")
+    # username = input("Username: ")
+    # password = getpass.getpass()
+
+    host = "127.0.0.1:6666"
+    username = "aniko"
+    password = "secretpasswd1234"
 
     match selected_protocol:
         case "HTTP":
@@ -53,12 +55,13 @@ def main(argc: int, argv: list[str]):
 
     while True:
         try:
-            cmd_arg = interactive.input_args(PROMPT)
+            cmd_arg = interactive.input_args(" ".join([commands.prompt, commands.prompt_info, interactive.INPUT_ARROW]))
 
             if len(cmd_arg) <= 0:
                 continue
 
-            exec(f"commands.{cmd_arg[0]}({cmd_arg[1:]})")
+            if cmd_arg[0] in [c for c in dir(commands) if not (c.startswith("__"))]: 
+                exec(f"commands.{cmd_arg[0]}({cmd_arg[1:]})")
 
         except KeyboardInterrupt or EOFError:
             if len(interactive.preinput()) <= 0:

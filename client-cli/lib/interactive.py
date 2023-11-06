@@ -3,17 +3,19 @@ import os
 
 from lib import http
 
+INPUT_ARROW = "> "
 CURRENT_PATH = "/".join(__file__.split("/")[:-2])
-
 HISTORY_PATH = os.path.join(CURRENT_PATH, ".history")
-
-# TODO: finish command connect
 
 class Commands:
     def __init__(self, api: http.HTTP_API) -> None:
+        self.selected_agent = None
+        self.prompt_info = ""
+        self.prompt = ansi_color(4, 4) + "unicorn" + _reset_ansi
+
         self.api: http.HTTP_API = api
 
-    def list_agents(self, *args):
+    def list_agents(self, args: list[str]):
         agents = self.api.get_agents().json()
                 
         if len(agents) <= 0:
@@ -24,10 +26,21 @@ class Commands:
                 agents
             )
     
-    def connect(self, *args):
+    def connect(self, args: list[str]):
         target_fingerprint = args[0]
+        
+        agent_info = self.api.check_exist_agent(target_fingerprint).json()
+        
+        if agent_info["exist"]:
+            self.selected_agent = target_fingerprint
+            self.prompt_info = "["+agent_info["addr"]+"]"
+        else:
+            print("this agent don't exist")
 
-        print(self.api.check_exist_agent(target_fingerprint).json())
+    def send_command(self, args: list[str]):
+        command = " ".join(args)
+        print(self.api.send_command(self.selected_agent, command).json())
+        
 
     def exit():
         print("Bye!\n")

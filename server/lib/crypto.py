@@ -1,26 +1,25 @@
 import asyncio
 import os
+import socket
 
 from Crypto.Cipher import Salsa20
 
 class EncryptedTunnel:
-    def __init__(self, r: asyncio.streams.StreamReader, w: asyncio.streams.StreamWriter, key: bytes, nonce: bytes) -> None:
+    def __init__(self, stream_socket: socket.socket, key: bytes, nonce: bytes) -> None:
         self.key = key
         self.nonce = nonce
 
-        self.r = r
-        self.w = w
+        self.socket: socket.socket = stream_socket
 
-    async def send(self, data: bytes):
+    def send(self, data: bytes):
         cipher = Salsa20.new(self.key, self.nonce)
 
-        self.w.write(cipher.encrypt(data))
-        await self.w.drain()
+        self.socket.send(cipher.encrypt(data))
 
-    async def recv(self, buffer: int) -> bytes:
+    def recv(self, buffer: int) -> bytes:
         cipher = Salsa20.new(self.key, self.nonce)
 
-        data = await self.r.read(buffer)
+        data = self.socket.recv(buffer)
         return cipher.decrypt(data)
     
 def get_hwid() -> str:

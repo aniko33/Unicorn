@@ -42,3 +42,144 @@ aniko
 connect a
 connect
 exit
+127.0.0.1:6666
+aniko
+list_agents
+connect d
+list_agents
+connect yKQAdLIkTb2VMyKQfr07QNlzbmsjgu
+127.0.0.1:6666
+aniko
+list_agents
+connect qlaauSUuGUJBMiJkpGEA36FPnHr1Jm
+127.0.0.1:6666
+aniko
+list_agents
+connect l0xzgJZ9eV8fju82E0MFKSfNPcCpbQ
+127.0.0.1:6666
+aniko
+list_agents
+connect b7KKqRwrU1iWX66vo11E16ZtWv93xV
+127.0.0.1:6666
+aniko
+list_agents
+connect Ae9jcFGWXRxOgxbYnJV8elgM3btbkx
+127.0.0.1:6666
+aniko
+list_agents
+connect Ae9jcFGWXRxOgxbYnJV8elgM3btbkx
+127.0.0.1:6666
+aniko
+list_agents
+connect Ae9jcFGWXRxOgxbYnJV8elgM3btbkx
+127.0.0.1:6666
+aniko
+list_agents
+connect Ae9jcFGWXRxOgxbYnJV8elgM3btbkx
+127.0.0.1:6666
+aniko
+connect 
+lsit
+list_agents
+connect Ae9jcFGWXRxOgxbYnJV8elgM3btbkx
+list_agents
+connect Ae9jcFGWXRxOgxbYnJV8elgM3btbkx
+list_agents
+connect Ae9jcFGWXRxOgxbYnJV8elgM3btbkx
+d
+cle
+list_agents
+connect f
+list_agents
+connect 6Gz89PDc85TcVYOAeBFmv7PZcIB30B
+ls
+connect 6Gz89PDc85TcVYOAeBFmv7PZcIB30
+connect 6Gz89PDc85TcVYOAeBFmv7PZcIB30B
+list_agents
+connect 6Gz89PDc85TcVYOAeBFmv7PZcIB30B
+clear
+list_agents
+connect o88mfMENk1u3W3DsplAtR366U0UA7b
+send_command ls
+list_agents
+connect Wqrr8DfD8NaryoJCTnYI6FGRDA3RP3
+send_command ls
+list_agents
+connect hpnsCy9oUxyDGkNy3CaUtcukICSxI2
+send_command ls
+list_agents
+connect 4Jonl7ubP2jmNK6t5eKYHIQzhPGdpu
+send_command ls
+list_agents
+connect Nc4BlcWBiTcl0aPQhR7V9WVYC9Ac7H
+send_command ls
+list_agents
+connect eBmfj6I7jbDsIWijqp0sVy8PfOBqlU
+list_agents
+send_command ls
+list_agents
+connect hp4eQXld3t1b7ANLpn6F0OGNXPesrH
+send_command ls
+list_agents
+connect dbzIJXihVEqsW4zRkmdozKotxh8eaK
+ls
+list_agents ls
+send_command ls
+list_agents
+connect gMtPZYTm3cm6FNidxvy6YmqYwBc4Wc
+send_command ls
+list_agents
+connect AiDWXbs4oQef59SDEX5lGWZrbbovdh
+send_command ls
+list_agents
+connect qbLmUiwBa3H5etsEEu0Ks5xRqmxyjd
+ls
+send_command ls
+list_agents
+send_command ls
+list_agents
+connect cwWYwGvGWbhuUeoT5FdOyydTwuNYmE
+send_command ls
+list_agents
+connect xsx3wSfqU4ZHbmWRDge5lvWMH1Hh4t
+send_command ls
+list_agents
+connect TWupm24D8gzfSSnNeWIoplcgEFHp1K
+send_command ls
+lsi
+list_agents
+connect HimEwPvRubvFgtP8sv5dASo7oSCoH6
+send_command ls
+lsi
+list_agents
+connect ZBGDjeOWD3ubC0W2iBtd8898GMplJn
+ls
+send_command ls 
+connect ZBGDjeOWD3ubC0W2iBtd8898GMplJn
+list_agents
+connect FLvdxh6QygrFYzUdfAn56gtaOFA6JL
+send_command ls
+list_agents
+connect 8UMjLh0Ui7gCJXBqP0vjgCVapnMdwc
+send_command ls
+list_agents
+connect ArjcQ4wggCxJrB1gnTHuYkWc9sdT58
+send_command dir
+list_agents
+connect y6DI6wliF3ZTkSNsi1sNWMVebRTbo1
+send_command ls
+list_agents
+connect ci5ebpM17RbRZGZuuWj7w2VFAUMc7a
+send_command ls
+list_agents
+connect DlJhIv7oHDN3PPgXgqnTWRNQa4lBij
+send_command ls
+list_agents
+connect m4KL9JGFWN2tFT0ULWxXNY3QDK9YEM
+send_command ls
+connect m4KL9JGFWN2tFT0ULWxXNY3QDK9YEM
+send_command ls
+list_agents
+connect 7dgv9kNT7MQ0632jLcbKF2IveKLlPe
+send_command dir
+send_command ls

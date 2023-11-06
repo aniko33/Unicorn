@@ -4,7 +4,6 @@ import urllib3
 
 urllib3.disable_warnings()
 
-
 class HTTP_API:
     def __init__(self, host: str, https: bool) -> None:
         self.session_id = None
@@ -32,3 +31,6 @@ class HTTP_API:
             self.host + "/exist_agent",
             json={"session": self.session_id, "fingerprint": fingerprint},
         )
+    
+    def send_command(self, target: str, command: str) -> requests.Response:
+        return self.http_client.post(self.host + "/send_command", json={"command": command, "fingerprint": target})
