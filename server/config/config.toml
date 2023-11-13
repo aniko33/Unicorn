@@ -5,4 +5,4 @@ aniko = "secretpasswd1234"
 host = "127.0.0.1:6666"
 
 [agent]
-host = "127.0.0.1:8888"
+host = "0.0.0.0:8888"

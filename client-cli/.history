@@ -183,3 +183,99 @@ list_agents
 connect 7dgv9kNT7MQ0632jLcbKF2IveKLlPe
 send_command dir
 send_command ls
+list_agents
+connect GqaFM9lmJnIOySN6oajksMRwc93bYa
+send_command ls
+send_command dir
+send_command systeminfo
+send_command cd
+list_agents
+connect YFrxm4eMs98CrM8qGedQ99NaEJT05h
+list_agents
+connect 0xTfCes3AbYNBZ9B53Ny0SAk4hJJ7c
+send_command dir
+send_command pwd
+send_command dir
+list_agents
+connecg hGilYv8ZljXVMKkExuSvOASuSTYEGa
+connect hGilYv8ZljXVMKkExuSvOASuSTYEGa
+send_command dir
+send_command pwd
+send_command 
+send_command dir
+connect a
+list_agents
+connect fq7ynjBB2YSTZKzINTF6RIDVME5ZCa
+send_command 
+list_agents
+connect j51xyzzWdZZk4IbTc0sHz6CMaiYi5l
+send_command dir
+send_command cd
+send_command 
+send_command pwd
+send_command send
+list_agents
+connect lfbf4BbFA2sGvRt22BvVF6RZ0OisbS
+connect dir
+send_command cd
+send_command dir
+send_command 
+send_command aa
+list_agents
+connect lfbf4BbFA2sGvRt22BvVF6RZ0OisbS
+list_agents
+connect LGawDjX9T8mGRVtBV4VSr5zGPNbMxU
+send_command dir
+send_command cd
+send_command dir
+send_command cd
+list_agents
+connect 3bARFCO10vHBmarju0wds9JXQctEvF
+send_command dir
+send_command cd
+start notepad.exe
+send_command start notepad.exe
+send_command start cal
+send_command start calc
+list_agents
+connect UtSTrtKgWYQuLpx2mTuBrDreqs1R1k
+list_agents
+send_command dir
+send_command ls
+list_agents
+connect 3lfGiQaxzUDEYzeWWdQtzem3heuyPW
+send_command dir
+send_command 
+send_command s
+send_command dir
+send_command di
+send_command dir
+send_command sss
+send_command dir
+list_agents
+connect dbpFg9iLfuSxvcxtPc0C98opU86ETR
+send_command dir
+list_agents
+h6j0VJzImXFBSvTbotwyRBbj7XUw4b
+send_command dir
+list_agents
+connect eNVbbIYrHJqHFTFWtkNY3SMNfskBa8
+send_command dir
+send_command d
+send_command v
+list_agents
+connect             print(output_json["output"])
+list_agents
+connect eNVbbIYrHJqHFTFWtkNY3SMNfskBa8
+send_command dir
+send_command cd
+send_command dir
+list_agents
+connect ePo8xBq3M4cJ3a2dt0HNMJSYJm4ojq
+list_agents
+connect ePo8xBq3M4cJ3a2dt0HNMJSYJm4ojq
+send_command dir
+send_command cd
+send_command calca
+send_command calc
+list_agents

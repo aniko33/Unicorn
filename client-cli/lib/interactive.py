@@ -39,8 +39,15 @@ class Commands:
 
     def send_command(self, args: list[str]):
         command = " ".join(args)
-        print(self.api.send_command(self.selected_agent, command).json())
-        
+
+        if len(command) <= 0:
+            return
+
+        output_json = self.api.send_command(self.selected_agent, command).json()
+        if "output" in output_json:
+            print(output_json["output"])
+        else:
+            print("error:" + output_json["error"])
 
     def exit():
         print("Bye!\n")

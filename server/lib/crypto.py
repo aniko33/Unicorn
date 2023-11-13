@@ -1,4 +1,3 @@
-import asyncio
 import os
 import socket
 
@@ -21,6 +20,17 @@ class EncryptedTunnel:
 
         data = self.socket.recv(buffer)
         return cipher.decrypt(data)
+    
+    def recv_big(self, buffer: int) -> bytearray:
+        data = bytearray()
+        
+        while True:
+            recved = self.recv(buffer)
+            data.extend(recved)
+            if len(recved) < buffer:
+                break
+
+        return data
     
 def get_hwid() -> str:
     if os.name == "nt":
