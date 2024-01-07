@@ -32,5 +32,5 @@ def warn(msg: str, end = '\n'):
 def error(msg: str, end = '\n'):
     sys.stdout.write(f"[{_error} ERROR {_reset}:: {_time + current_time() + _reset} ]\t{msg}"+end)
 
-def error(msg: str, end = '\n'):
+def fatalerror(msg: str, end = '\n'):
     sys.stdout.write(f"[{_fatal} FATAL ERROR {_reset}:: {_time + current_time() + _reset} ]\t{msg}"+end)

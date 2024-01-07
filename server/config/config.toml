@@ -1,8 +1,0 @@
-[whitelist]
-aniko = "secretpasswd1234"
-
-[http]
-host = "127.0.0.1:6666"
-
-[agent]
-host = "0.0.0.0:8888"
