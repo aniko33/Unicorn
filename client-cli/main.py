@@ -1,73 +1,68 @@
+from lib import cli
+from lib import commands
+
 import sys
-import inquirer
 import getpass
 
-from lib import interactive
-from lib.interactive import ansi_color, _reset_ansi, clear
-from lib import http
+from hashlib import sha256
 
+TARGET = "No target"
 
-http_api: http.HTTP_API = None
-
-def server_connection() -> http.HTTP_API:
-    selected_protocol = inquirer.prompt(
-        [
-            inquirer.List(
-                "protocol",
-                message="What protocol do you want to use?",
-                choices=["HTTP", "HTTPS"],
-            ),
-        ]
-    )["protocol"]
-
-    # host = input("Host (ip:port): ")
-    # username = input("Username: ")
-    # password = getpass.getpass()
-
-    host = "127.0.0.1:6666"
-    username = "aniko"
-    password = "secretpasswd1234"
-
-    match selected_protocol:
-        case "HTTP":
-            http_api = http.HTTP_API(f"http://{host}", False)
-        
-        case "HTTPS":
-            http_api = http.HTTP_API(f"https://{host}", True)
-
-    r = http_api.login(username, password)
-
-    if r.status_code != 200:
-        print(ansi_color(9)+"ERROR: "+r.text + _reset_ansi)
-        quit(1)
+def server_connection(host: str, username: str, password: str, ssl = False) -> bool:
+    if ssl:
+        commands.HTTP_SESSION.verify = False
+        commands.HTTP_POINT = "https://" + host
     else:
-        http_api.session_id = r.json()["session"]
+        commands.HTTP_POINT = "http://" + host
 
-    return http_api
+    login_request = commands.HTTP_SESSION.post(
+        commands.HTTP_POINT + "/login",
+        json={
+            "username": username,
+            "password": password
+        }
+    )
+
+    if login_request.status_code != 200:
+        return False
+    
+    commands.SESSION_ID = login_request.text
+
+    return True
 
 def main(argc: int, argv: list[str]):
-    interactive._rline_start()
+    ssl_enabled = False
     
-    http_api = server_connection()
-    clear()
+    if argc < 3:
+        print("Usage:", __file__.split("/")[-1], "<host:port> <username> [--ssl]")
+        quit(1)
+    elif argc > 4:
+        if argv[3] != "--ssl":
+            print(argv[3], "is a invalid argument")
+        else:
+            ssl_enabled = True
 
-    commands = interactive.Commands(http_api)
+    host = argv[1]
+    username = argv[2]
+    password = getpass.getpass("Password :: ")
+    
+    if not server_connection(host, username, sha256(password.encode()).hexdigest(), ssl_enabled):
+        print("Connection to server has been failed")
+
+    cli._readline_start()
 
     while True:
+        args = cli.iinput(f"{cli.ansi(15, 4)}Unicorn{cli.reset_ansi} [ {TARGET} ] :: ")
+        
+        if len(args) <= 0:
+            continue
+
         try:
-            cmd_arg = interactive.input_args(" ".join([commands.prompt, commands.prompt_info, interactive.INPUT_ARROW]))
-
-            if len(cmd_arg) <= 0:
-                continue
-
-            if cmd_arg[0] in [c for c in dir(commands) if not (c.startswith("__"))]: 
-                exec(f"commands.{cmd_arg[0]}({cmd_arg[1:]})")
-
-        except KeyboardInterrupt or EOFError:
-            if len(interactive.preinput()) <= 0:
-                print("type 'exit' to exit")
-            else:
-                print()
+            func = getattr(commands, args[0])
+            func(*args[1:])
+        
+        except AttributeError:
+            continue
 
 if __name__ == "__main__":
     main(len(sys.argv), sys.argv)
