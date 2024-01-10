@@ -21,7 +21,7 @@ def main(argc: int, argv: list[str]):
         port = LISTENERS[listener]["port"]
         type = LISTENERS[listener]["type"]
 
-        phandler = Process  (
+        phandler = Thread(
             target=hadler.run,
             args=(ip, port, type))
         

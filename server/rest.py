@@ -34,9 +34,10 @@ def get_agents(session: str):
         return "Invalid session ID", 401
     
     for agent in vglobals.servercfg.agents:
+        print(vglobals.servercfg.agents[agent])
         addr = vglobals.servercfg.agents[agent].addr
         agents.append([agent, addr])
-    
+
     return jsonify(agents)
 
 def add_listener():

@@ -10,6 +10,10 @@ class ConnectionTunnel(ABC):
     def __init__(self, connection: socket.socket, agent_id: str) -> None:
         self.connection = connection
         self.agent_id = agent_id
+        
+        addr = connection.getpeername()
+
+        self.addr = addr[0] + ":" + str(addr[1])
 
         Thread(target=self.__stayalive).start()
     
