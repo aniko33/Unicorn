@@ -18,7 +18,7 @@ def run(ip: str, port: int, listener_type: str):
     server.bind((ip, port))
     server.listen()
 
-    logger.debug(f"Listening: {ip}:{port}")
+    logger.debug(f"{listener_type}: Listening in {ip}:{port}")
 
     while True:
         agent, addr = server.accept()

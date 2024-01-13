@@ -15,7 +15,7 @@ completions = [cmd for cmd in dir(commands) if not cmd.startswith("__") | cmd.is
 
 def _readline_completer(text: str, state):
     if text:
-        matches = [s for s in completions if s and s.startswitch(text)]
+        matches = [s for s in completions if s and s.startswith(text)]
     else:
         matches = completions[:]
     
@@ -29,16 +29,23 @@ def _readline_start():
     readline.set_completer(_readline_completer)
     readline.parse_and_bind("tab: complete")
 
+def ansi(code: int) -> str:
+    return f"\033[{code}m"
 
-
-def ansi(code: int, style = 38) -> str:
-    return f"\033[{style};5;{code}m"
+def ansi_str(__text: str, code: int) -> str:
+    return ansi(code) + __text + reset_ansi
 
 def preinput() -> str:
     return readline.get_line_buffer()
 
-def iinput(__prompt: str) -> tuple:
-    getted = input(__prompt)
+def iinput() -> tuple:
+    prompt = f"{ansi(4)}Unicorn{reset_ansi}"
+
+    if len(commands.TARGET) > 0:
+        ip, port = commands.TARGET[1].split(':')
+        getted = input(f"{prompt} [ {ip}:{ansi_str(port, 31)} ] :: ")
+    else:
+        getted = input(f"{prompt} :: ")
 
     readline.write_history_file(HISTORY_PATH)
 

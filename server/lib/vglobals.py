@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from multiprocessing import Manager
 from os import path
 
 import os
@@ -6,12 +7,19 @@ import tomllib
 
 from lib import logger
 
+manager = Manager()
+
+agents = {}
+clients_session = {}
+listeners = {}
+
 CURRENT_PATH = path.realpath(os.getcwd())
 CONFIG_PATH = path.join(CURRENT_PATH, "config")
+LISTENERS_PATH = path.join(CURRENT_PATH, "listeners")
 
 SERVER_CONFIG_PATH = path.join(CONFIG_PATH, "server.toml")
 
-LISTENERS = {}
+LISTENERS_AVAILABLE = [listener.split(".")[0] for listener in os.listdir(LISTENERS_PATH) if listener.endswith(".py")]
 LISTENERS_PROCESSES = {}
 
 if not path.exists(SERVER_CONFIG_PATH):
@@ -32,11 +40,9 @@ CLIENT_ENABLE_SSL: bool = config["client-server"]["ssl"]
 
 for k in config.keys():
     if k.startswith("listener"):
-        LISTENERS[k] = config[k]
+        listeners[k] = config[k]
 
-@dataclass
-class ServerCFG:
-    agents = {}
-    clients_session = {}
 
-servercfg = ServerCFG()
+def refresh_available_listeners():
+    LISTENERS_AVAILABLE.clear()
+    LISTENERS_AVAILABLE.extend([listener.split(".")[0] for listener in os.listdir(LISTENERS_PATH) if listener.endswith(".py")])

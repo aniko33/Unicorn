@@ -15,10 +15,5 @@ type = "default"
 ip = "0.0.0.0"
 port = 7777
 
-[listener-beta]
-type = "default"
-ip = "0.0.0.0"
-port = 9999
-
 [whitelist]
-aniko = "securepassword"
+aniko = "aniko"

@@ -45,4 +45,4 @@ def init_connection(agent: socket.socket, buffer: int):
 
     client_encrypted = EncryptedTunnel(agent, agent_id, key, iv)
 
-    vglobals.servercfg.agents[agent_id] = client_encrypted
+    vglobals.agents[agent_id] = client_encrypted
