@@ -29,17 +29,28 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 
 ### TODO - Agent
 - [ ] commands
+- [ ] persistence
 - [ ] injectable commads
+- [ ] process injection
 - [ ] clean code
 - [ ] optimization
 
 ### TODO - Server
-- [ ] connection with agents
+- [X] multiple listeners and dynamic addition
+- [ ] low resource usage
+- [ ] better "multi-player"
 - [ ] payload generation
+- [ ] proxy server for pivoting
 - [ ] clients chat
+- [ ] remote tools
 
 ### TODO - Client (CLI - GUI)
-- [X] http client
-- [ ] server connection
 - [ ] manage agents
+- [ ] sending commands
+- [ ] inject shellcode
+- [ ] local tools
 - [ ] clients chat
+- [ ] dynamic command additon for GNU-readline
+- [ ] more colorful and beautiful :3
+- [ ] custom scripts
+- [ ] GUI in Rust with Tauri
