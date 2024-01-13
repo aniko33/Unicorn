@@ -15,20 +15,13 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 
 > Written in Python
 
-<img src=".img/client_agent_table.png">
-
-### Client (GUI)
-
-> Writed in Rust/JS using Tauri ([@anywayzz](https://github.com/anywayzz))
-
-<img src="https://github.com/aniko33/Unicorn/assets/76649588/d4beb5f2-30b7-401a-9982-45f191afe944">
-
+<img src=".img/client.png">
 
 ### Server
 
-> Written in Python using Flask & Asyncio
+> Written in Python using Flask
 
-<img src=".img/server_init.png">
+<img src=".img/server.png">
 
 ### Agent (DeltaAgent)
 
