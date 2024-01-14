@@ -15,20 +15,13 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 
 > Written in Python
 
-<img src=".img/client_agent_table.png">
-
-### Client (GUI)
-
-> Writed in Rust/JS using Tauri ([@anywayzz](https://github.com/anywayzz))
-
-<img src="https://github.com/aniko33/Unicorn/assets/76649588/d4beb5f2-30b7-401a-9982-45f191afe944">
-
+<img src=".img/client.png">
 
 ### Server
 
-> Written in Python using Flask & Asyncio
+> Written in Python using Flask
 
-<img src=".img/server_init.png">
+<img src=".img/server.png">
 
 ### Agent (DeltaAgent)
 
@@ -36,17 +29,28 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 
 ### TODO - Agent
 - [ ] commands
+- [ ] persistence
 - [ ] injectable commads
+- [ ] process injection
 - [ ] clean code
 - [ ] optimization
 
 ### TODO - Server
-- [ ] connection with agents
+- [X] multiple listeners and dynamic addition
+- [ ] low resource usage
+- [ ] better "multi-player"
 - [ ] payload generation
+- [ ] proxy server for pivoting
 - [ ] clients chat
+- [ ] remote tools
 
 ### TODO - Client (CLI - GUI)
-- [X] http client
-- [ ] server connection
 - [ ] manage agents
+- [ ] sending commands
+- [ ] inject shellcode
+- [ ] local tools
 - [ ] clients chat
+- [ ] dynamic command additon for GNU-readline
+- [ ] more colorful and beautiful :3
+- [ ] custom scripts
+- [ ] GUI in Rust with Tauri
