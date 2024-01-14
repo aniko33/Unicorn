@@ -1,12 +1,13 @@
 from lib import logger
 
 import socket
-import importlib
+
+from importlib import import_module
 
 BUFFER = 1024
 
 def use_listener(listener: str):
-    return importlib.import_module("listeners." + listener)
+    return import_module("listeners." + listener)
 
 def run(ip: str, port: int, listener_type: str):
     module = use_listener(listener_type)

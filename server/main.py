@@ -1,17 +1,14 @@
 from lib.vglobals import *
+from lib.sthread import Sthread
 
 import rest
 import hadler
 
-from threading import Thread
-from multiprocessing import Process
-
-import sys
 import time
 import resource
 
-# Set memory limit
 
+# Set memory limit
 logger.info(f"Memory limit: {MEMORY_LIMIT}")
 
 soft, hard = resource.getrlimit(resource.RLIMIT_AS)
@@ -20,42 +17,42 @@ resource.setrlimit(resource.RLIMIT_AS, (MEMORY_LIMIT, hard))
 def loop_check_processes_listeners():
     while True:
         try:
-            for listener in LISTENERS_PROCESSES:
-                listener_process: Process = LISTENERS_PROCESSES[listener]
+            for listener in listeners_threads:
+                listener_process: Sthread = listeners_threads[listener]
 
-                if not listener_process.is_alive():
-                    listener_process.close()
+                if not listener_process.isStopped():
+                    listener_process.stop()
 
                     listeners.pop(listener)
-                    LISTENERS_PROCESSES.pop(listener)
+                    listeners_threads.pop(listener)
         except RuntimeError:
             continue
 
         time.sleep(0.5)
 
-def main(argc: int, argv: list[str]):
+def main():
     for listener in listeners:
         ip = listeners[listener]["ip"]
         port = listeners[listener]["port"]
         type = listeners[listener]["type"]
 
-        if not type in LISTENERS_AVAILABLE:
+        if not type in listeners_available:
             logger.error(f"Listener \"{type}\" not found")
             quit(1)
 
-        phandler = Thread( # TODO: change to multiprocessing | problem: variable mutable agents in multiprocess, does not update 
+        thandler = Sthread(
             target=hadler.run,
             args=(ip, port, type))
         
-        LISTENERS_PROCESSES[listener] = phandler
+        listeners_threads[listener] = thandler
 
-        phandler.start()
+        thandler.start()
 
-    Thread(target=loop_check_processes_listeners).start()
+    Sthread(target=loop_check_processes_listeners).start()
     
     if CLIENT_ENABLE_SSL:
         # Start rest-server with SSL
-        Trest = Thread(target=rest.run, args=(
+        Trest = Sthread(target=rest.run, args=(
                 CLIENT_SERVER_IP,
                 CLIENT_SERVER_PORT,
                 True,
@@ -63,7 +60,7 @@ def main(argc: int, argv: list[str]):
 
     else:
         # Start rest-server without SSL
-        Trest = Thread(
+        Trest = Sthread(
             target=rest.run,
             args=(
                 CLIENT_SERVER_IP,
@@ -71,10 +68,10 @@ def main(argc: int, argv: list[str]):
             )
         )
 
-    Trest.start()
+    Trest.run()
 
 if __name__ == "__main__":
     try:
-        main(len(sys.argv), sys.argv)
+        main()
     except MemoryError:
         print("Insufficient memory")

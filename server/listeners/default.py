@@ -3,10 +3,10 @@ import rsa
 
 from Crypto.Cipher import Salsa20
 
-from lib import listener
-from lib import vglobals
+from lib.listener import ConnectionTunnel
+from lib.vglobals import agents
 
-class EncryptedTunnel(listener.ConnectionTunnel):
+class EncryptedTunnel(ConnectionTunnel):
     def __init__(self, connection: socket.socket, agent_id: str, key: bytes, iv: bytes) -> None:
         self.key = key
         self.iv = iv
@@ -45,4 +45,4 @@ def init_connection(agent: socket.socket, buffer: int):
 
     client_encrypted = EncryptedTunnel(agent, agent_id, key, iv)
 
-    vglobals.agents[agent_id] = client_encrypted
+    agents[agent_id] = client_encrypted
