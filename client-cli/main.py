@@ -1,11 +1,11 @@
 from lib import cli
 from lib import commands
+from lib import wsclient
 
 import sys
 import getpass
 
 from hashlib import sha256
-
 
 def server_connection(host: str, username: str, password: str, ssl=False) -> bool:
     if ssl:
@@ -25,10 +25,16 @@ def server_connection(host: str, username: str, password: str, ssl=False) -> boo
     if login_request.status_code != 200:
         return False
 
-    commands.SESSION_ID = login_request.text
+    login_request_json = login_request.json()
+
+    session_id = login_request_json["session"]
+    websocket_addr = login_request_json["wsaddr"]
+
+    commands.SESSION_ID = session_id
+    commands.USERNAME = username
+    commands.WSCONNECTION = wsclient.init_connection(websocket_addr)
 
     return True
-
 
 def main(argc: int, argv: list[str]):
     ssl_enabled = False
@@ -63,7 +69,11 @@ def main(argc: int, argv: list[str]):
             if len(args) <= 0:
                 continue
 
-            func = getattr(commands, args[0])
+            cmd: str = args[0]
+            if cmd.startswith(tuple(cli.SPECIAL_PREFIX.values())):
+                cmd = cli._from_special_case(cmd)
+
+            func = getattr(commands, cmd)
             func(*args[1:])
 
         except AttributeError:

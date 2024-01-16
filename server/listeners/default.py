@@ -4,7 +4,7 @@ import rsa
 from Crypto.Cipher import Salsa20
 
 from lib.listener import ConnectionTunnel
-from lib.vglobals import agents
+from lib.vglobals.sharedvars import agents
 
 class EncryptedTunnel(ConnectionTunnel):
     def __init__(self, connection: socket.socket, agent_id: str, key: bytes, iv: bytes) -> None:

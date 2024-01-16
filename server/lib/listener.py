@@ -4,7 +4,7 @@ import time
 from threading import Thread
 from abc import ABC, abstractmethod
 
-from lib.vglobals import agents
+from lib.vglobals.sharedvars import agents
 
 class ConnectionTunnel(ABC):
     def __init__(self, connection: socket.socket, agent_id: str) -> None:

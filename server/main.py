@@ -1,27 +1,32 @@
-from lib.vglobals import *
+from lib.vglobals.servercfg import *
+from lib.vglobals.sharedvars import listeners_threads, listeners
+from lib.globals import listeners_available
+
 from lib.sthread import Sthread
+from lib import logger
 
 import rest
 import hadler
+import wserver
 
 import time
 import resource
 
-
 # Set memory limit
+
 logger.info(f"Memory limit: {MEMORY_LIMIT}")
 
 soft, hard = resource.getrlimit(resource.RLIMIT_AS)
 resource.setrlimit(resource.RLIMIT_AS, (MEMORY_LIMIT, hard))
 
-def loop_check_processes_listeners():
+def loop_check_thread_listeners():
     while True:
         try:
             for listener in listeners_threads:
-                listener_process: Sthread = listeners_threads[listener]
+                listener_thread: Sthread = listeners_threads[listener]
 
-                if not listener_process.isStopped():
-                    listener_process.stop()
+                if listener_thread.isStopped():
+                    listener_thread.stop()
 
                     listeners.pop(listener)
                     listeners_threads.pop(listener)
@@ -48,27 +53,23 @@ def main():
 
         thandler.start()
 
-    Sthread(target=loop_check_processes_listeners).start()
+    Sthread(target=loop_check_thread_listeners).start()
     
-    if CLIENT_ENABLE_SSL:
+    # TODO: add SSL
+    Sthread(target=wserver.run, args=(WEBSOCKET_SERVER_IP, WEBSOCKET_SERVER_PORT)).start()
+
+
+    if REST_ENABLE_SSL:
         # Start rest-server with SSL
-        Trest = Sthread(target=rest.run, args=(
-                CLIENT_SERVER_IP,
-                CLIENT_SERVER_PORT,
+        rest.run(
+                REST_SERVER_IP,
+                REST_SERVER_PORT,
                 True,
-                (SSL_CERTIFICATE, SSL_KEY)))
+                (SSL_CERTIFICATE, SSL_KEY))
 
     else:
         # Start rest-server without SSL
-        Trest = Sthread(
-            target=rest.run,
-            args=(
-                CLIENT_SERVER_IP,
-                CLIENT_SERVER_PORT
-            )
-        )
-
-    Trest.run()
+        rest.run(REST_SERVER_IP,REST_SERVER_PORT)
 
 if __name__ == "__main__":
     try:

