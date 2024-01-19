@@ -1,9 +1,10 @@
 from lib import commands
 from lib.messages import ansi, ansi_str, reset_ansi
 
-import readline
-
 from os import path
+from pydoc import pager
+
+import readline
 
 CURRENT_PATH = "/".join(__file__.split("/")[:-2])
 HISTORY_PATH = path.join(CURRENT_PATH, ".history")
@@ -70,21 +71,22 @@ def iinput() -> tuple:
     return getted.split()
 
 
-def table(headers: list[str], data: list[list[str]], spaces=4):
+def table(headers: list[str], data: list[list[str]], spaces=4, lspace=3):
     div = " "*spaces
+    ldiv = " "*lspace
 
     print()
 
     col_widths = [max(len(str(cell)) for cell in col) for col in zip(headers, *data)]
 
     header_row = div.join(f"{header: <{width}}" for header, width in zip(headers, col_widths))
-    print(header_row)
+    print(ldiv + header_row)
 
     separator_row = div.join("-" * width for width in col_widths)
-    print(separator_row)
+    print(ldiv + separator_row)
 
     for row in data:
         row_str = div.join(f"{cell: <{width}}" for cell, width in zip(row, col_widths))
-        print(row_str)
+        print(ldiv + row_str)
 
     print()

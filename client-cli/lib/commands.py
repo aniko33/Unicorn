@@ -63,9 +63,17 @@ def connect(*args):
     for agent in agents:
         if agent[0] == id_target:
             TARGET.clear()
-            TARGET.append(id_target)
-            TARGET.append(agent[1])
+            TARGET.extend([id_target, agent[1]])
 
+def cmd_exec(*args):
+    if len(args) < 1:
+        print("cmd_exec <command>")
+        return
+    
+    if len(TARGET) <= 0:
+        __msg.alert("No target selected")
+
+    WSCONNECTION.send_command(args[0], TARGET[0])
 
 def get_ltype(*args):
     ...
@@ -101,10 +109,15 @@ def quit(*args):
 
 def _slashmsg(*args):
     if len(args) < 1:
-        print("/<msg>")
+        print("/msg <text>")
         return
     
     WSCONNECTION.send_chatmsg(" ".join(args))
 
-def _colonMail(*args):
-    ...
+def _slashmail(*args):
+    if len(WSCONNECTION.MESSAGES) > 0:
+        messages = ["\033[{}m {}\033[0m: {}".format(msg["color"], msg["username"], msg["message"]) for msg in WSCONNECTION.MESSAGES]
+
+        __cli.pager("\n".join(messages))
+    else:
+        __msg.red("No messages found")

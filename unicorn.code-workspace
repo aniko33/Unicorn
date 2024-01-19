@@ -5,9 +5,6 @@
 		},
 		{
 			"path": "client-cli"
-		},
-		{
-			"path": "testagent"
 		}
 	],
 	"settings": {}

