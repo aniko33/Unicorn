@@ -41,7 +41,8 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 - [ ] better "multi-player"
 - [ ] payload generation
 - [ ] proxy server for pivoting
-- [ ] clients chat
+- [X] clients chat
+- [ ] sync client chat
 - [ ] remote tools
 
 ### TODO - Client (CLI - GUI)
@@ -49,7 +50,7 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 - [ ] sending commands
 - [ ] inject shellcode
 - [ ] local tools
-- [ ] clients chat
+- [X] clients chat
 - [ ] dynamic command additon for GNU-readline
 - [ ] more colorful and beautiful :3
 - [ ] custom scripts
