@@ -7,7 +7,7 @@ use salsa20::{cipher::KeyIvInit, Salsa20};
 pub struct EncryptedTunnel {
     _key: Vec<u8>,
     _iv: Vec<u8>,
-    socket: TcpStream,
+    pub socket: TcpStream,
 }
 
 impl EncryptedTunnel {
@@ -20,7 +20,18 @@ impl EncryptedTunnel {
         }
     }
 
-    pub fn send(&mut self, mut data: Vec<u8>) -> Result<(), io::Error> {
+    pub fn send(&mut self, data: &[u8]) -> Result<(), io::Error> {
+        let mut output: Vec<u8> = Vec::from(data);
+
+        let mut cipher = Salsa20::new(self._key.as_slice().into(), self._iv.as_slice().into());
+        cipher.apply_keystream(&mut output);
+
+        self.socket.write_all(&output)?;
+
+        Ok(())
+    }
+
+    pub fn sendvec(&mut self, mut data: Vec<u8>) -> Result<(), io::Error> {
         let mut cipher = Salsa20::new(self._key.as_slice().into(), self._iv.as_slice().into());
         cipher.apply_keystream(data.as_mut_slice());
 

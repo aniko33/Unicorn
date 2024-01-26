@@ -72,6 +72,7 @@ def cmd_exec(*args):
     
     if len(TARGET) <= 0:
         __msg.alert("No target selected")
+        return
 
     WSCONNECTION.send_command(args[0], TARGET[0])
 
