@@ -2,8 +2,9 @@ from lib.vglobals.servercfg import *
 from lib.vglobals.sharedvars import *
 from lib.globals import refresh_available_listeners, listeners_available
 
-from hadler import BUFFER, run as handler_run
+from hadler import run as handler_run
 from lib.sthread import Sthread
+from lib import response
 
 from flask import Flask, request, jsonify
 from hashlib import sha256
@@ -16,19 +17,19 @@ app = Flask(__name__)
 @app.route("/login", methods=["POST"])
 def login():
     if request.json is None:
-        return "JSON body is none", 500
+        return response.json_body_empty
 
     username: str = request.json["username"]
     password: str = request.json["password"]
 
     if not username in WHITELIST:
-        return "Invalid username", 401
+        return response.username_is_not_whitelisted
 
     orginal_password = sha256(
         WHITELIST[username].encode()).hexdigest()
 
     if password != orginal_password:
-        return "Invalid password", 401
+        return response.invalid_password
 
     session_uuid = uuid4().hex
 
@@ -42,7 +43,7 @@ def get_agents(session: str):
     agents_row = []
 
     if not session in list(clients_session.values()):
-        return "Invalid session ID", 401
+        return response.invalid_sessionid
 
     for agent in agents:
         addr = agents[agent].addr
@@ -54,12 +55,12 @@ def get_agents(session: str):
 @app.route("/add_listener", methods=["POST"])
 def add_listener():
     if request.json is None:
-        return "JSON body is none", 500
+        return response.json_body_empty
 
     session: str = request.json["auth"]
 
     if not session in list(clients_session.values()):
-        return "Invalid session ID", 401
+        return response.invalid_sessionid
 
     listener_type = request.json["type"]
 
@@ -85,7 +86,7 @@ def get_listeners(session: str):
     listeners_row = []
 
     if not session in list(clients_session.values()):
-        return "Invalid session ID", 401
+        return response.invalid_sessionid
 
     for listener_name in listeners:
         listener = listeners[listener_name]
@@ -100,12 +101,12 @@ def get_listeners(session: str):
 @app.route("/send_command", methods=["POST"])
 def send_command(): # TODO: send output to client 
     if request.json is None:
-        return "JSON body is none", 500
+        return response.json_body_empty
 
     session: str = request.json["auth"]
 
     if not session in list(clients_session.values()):
-        return "Invalid session ID", 401
+        return response.invalid_sessionid
     
     target_id: str = request.json["target"]
     command: str = request.json["cmd"]

@@ -66,6 +66,9 @@ def connect(*args):
         if agent[0] == id_target:
             TARGET.clear()
             TARGET.extend([id_target, agent[1]])
+        return
+
+    __msg.alert(f"Agent with ID {id_target} not found.")
 
 def cmd_exec(*args):
     if len(args) < 1:
