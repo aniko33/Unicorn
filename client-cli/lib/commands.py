@@ -4,6 +4,8 @@ from lib import messages as __msg
 import requests as __requests
 import os as __os
 
+# == Constants
+
 TARGET = []  # [ID, host]
 HTTP_SESSION = __requests.session()
 HTTP_POINT = ""
@@ -74,7 +76,14 @@ def cmd_exec(*args):
         __msg.alert("No target selected")
         return
 
-    WSCONNECTION.send_command(args[0], TARGET[0])
+    r = HTTP_SESSION.post(HTTP_POINT + "/send_command", json={"auth": SESSION_ID, "target": TARGET[0], "cmd": args[0]})
+    
+    if r.status_code != 200:
+        __msg.alert(r.text)
+    else:
+        job = r.json()["job"]
+        __msg.green("Added new job:", job)
+        WSCONNECTION.JOBS.append(job)
 
 def get_ltype(*args):
     ...

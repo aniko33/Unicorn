@@ -1,10 +1,13 @@
 import socket
 import time
+import json
+import asyncio
 
 from threading import Thread
 from abc import ABC, abstractmethod
 
-from lib.vglobals.sharedvars import agents
+from lib.vglobals.sharedvars import agents, clients_wsocket
+from lib.response import wresponse
 
 class ConnectionTunnel(ABC):
     def __init__(self, connection: socket.socket, agent_id: str) -> None:
@@ -15,7 +18,8 @@ class ConnectionTunnel(ABC):
 
         self.addr = addr[0] + ":" + str(addr[1])
 
-        Thread(target=self.__stayalive).start()
+        # Thread(target=self.__stayalive).start()
+        Thread(target=self.__broadcast).start()
     
     @abstractmethod
     def send(self, __data: bytes) -> int:
@@ -53,3 +57,14 @@ class ConnectionTunnel(ABC):
         
         if not is_alive:
             agents.pop(self.agent_id)
+
+    def __broadcast(self):
+        while True:
+            r = self.recv(1024)
+            if len(r) <= 0:
+                self.connection.close()
+                agents.pop(self.agent_id)
+
+            r = json.loads(r)
+            for connection in clients_wsocket:
+                asyncio.run(connection.send(wresponse(r, "job")))

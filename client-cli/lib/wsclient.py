@@ -15,6 +15,7 @@ class WSClientSession:
         self.SESSION_ID = SESSION_ID
         self.MAIL_COUNT = 0
         self.MESSAGES: list[dict] = []
+        self.JOBS = []
         
         self.username = username
         self.color = random_ansi_code() # Username color
@@ -25,9 +26,6 @@ class WSClientSession:
     def send_chatmsg(self, msg: str):
         self.websocket.send(jsontb({"msg": msg, "auth": self.SESSION_ID, "type": "chat", "color": self.color}))
     
-    def send_command(self, cmd: str, target: str):
-        self.websocket.send(jsontb({"exec": cmd, "target": target, "auth": self.SESSION_ID, "type": "cmd"}))
-
     def get_all_messages(self):
         for message in self.websocket:
             message = json.loads(message)
@@ -40,6 +38,12 @@ class WSClientSession:
                         self.MESSAGES.append(message)
                         
                         messages.info("New message arrived:", self.MAIL_COUNT)
+                case "job":
+                    if message["job"] in self.JOBS:
+                        if message["success"]:
+                            messages.green(message["output"])
+                        else:
+                            messages.warn(message["output"])
 
 def random_ansi_code():
     return random.randint(31, 36)
