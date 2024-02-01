@@ -2,7 +2,7 @@ from lib.vglobals.servercfg import *
 from lib.vglobals.sharedvars import *
 from lib.globals import refresh_available_listeners, listeners_available
 
-from hadler import run as handler_run
+from handler import run as handler_run
 from lib.sthread import Sthread
 from lib import response
 
@@ -98,8 +98,15 @@ def get_listeners(session: str):
 
     return jsonify(listeners_row)
 
+@app.route("/listener_types/<session>")
+def get_listeners_types(session: str):
+    if not session in list(clients_session.values()):
+        return response.invalid_sessionid
+    
+    return jsonify(listeners_available)
+
 @app.route("/send_command", methods=["POST"])
-def send_command(): # TODO: send output to client 
+def send_command():
     if request.json is None:
         return response.json_body_empty
 
@@ -123,8 +130,6 @@ def send_command(): # TODO: send output to client
     jobs[job_n] = None
     
     return jsonify({"job": job_n})
-
-# TODO: Websocket chat
 
 def run(ip: str, port: int, ssl=False, ssl_context=()):
     if ssl:

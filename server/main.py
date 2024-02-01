@@ -6,7 +6,7 @@ from lib.sthread import Sthread
 from lib import logger
 
 import rest
-import hadler
+import handler
 import wserver
 
 import time
@@ -46,7 +46,7 @@ def main():
             quit(1)
 
         thandler = Sthread(
-            target=hadler.run,
+            target=handler.run,
             args=(ip, port, type))
         
         listeners_threads[listener] = thandler
@@ -55,8 +55,15 @@ def main():
 
     Sthread(target=loop_check_thread_listeners).start()
     
-    # TODO: add SSL
-    Sthread(target=wserver.run, args=(WEBSOCKET_SERVER_IP, WEBSOCKET_SERVER_PORT)).start()
+    if WEBSOCKET_ENABLE_SSL:
+        Sthread(target=wserver.run, args=(
+            WEBSOCKET_SERVER_IP,
+            WEBSOCKET_SERVER_PORT,
+            True,
+            (SSL_CERTIFICATE, SSL_KEY))
+        ).start()
+    else:
+        Sthread(target=wserver.run, args=(WEBSOCKET_SERVER_IP, WEBSOCKET_SERVER_PORT)).start()
 
 
     if REST_ENABLE_SSL:

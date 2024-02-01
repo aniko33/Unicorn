@@ -1,6 +1,6 @@
 from lib import commands
-from lib.messages import ansi, ansi_str, reset_ansi
 
+from stone_color.color import ansistr, legacy_ansistr
 from os import path
 from pydoc import pager
 
@@ -13,13 +13,17 @@ SPECIAL_PREFIX = {"_dot": ".", "_slash": "/", "_colon": ":"}
 if not path.exists(HISTORY_PATH):
     open(HISTORY_PATH, "w").close()
 
+def _is_command_case(text: str) -> bool:
+    return text[0].isupper() and text[1:].islower()
+
+def _to_command_case(text: str) -> bool:
+    return text[0].upper() + text[1:].lower()
 
 def _to_special_case(text: str):
     for word, initial in SPECIAL_PREFIX.items():
         text = text.replace(word, initial)
 
     return text
-
 
 def _from_special_case(text: str):
     special_prefix_inveted = {v: k for k, v in SPECIAL_PREFIX.items()}.items()
@@ -30,7 +34,7 @@ def _from_special_case(text: str):
     return text
 
 
-completions = [cmd for cmd in dir(commands) if not cmd.startswith("__") | cmd.isupper() | cmd.startswith(tuple(SPECIAL_PREFIX.keys()))]
+completions = [cmd.lower() for cmd in dir(commands) if _is_command_case(cmd) and not cmd.startswith(tuple(SPECIAL_PREFIX.keys()))]
 special_completions = [_to_special_case(cmd) for cmd in dir(commands) if cmd.startswith(tuple(SPECIAL_PREFIX.keys()))]
 
 completions.extend(special_completions)
@@ -58,33 +62,15 @@ def preinput() -> str:
 
 
 def iinput() -> tuple:
-    prompt = ansi_str("unicorn", 4)
+    # todo: fix '"\033[0m"'
+    prompt = legacy_ansistr("unicorn", 4) + "\033[0m"
 
     if len(commands.TARGET) > 0:
         ip, port = commands.TARGET[1].split(':')
-        getted = input(f"{prompt} [ {ip}:{ansi_str(port, 31)} ] :: ")
+        getted = input(f"{prompt} [ {ip}:{ansistr(port, 1)} ] :: ")
     else:
         getted = input(f"{prompt} :: ")
 
     readline.write_history_file(HISTORY_PATH)
 
     return getted.split()
-
-
-def table(headers: list[str], data: list[list[str]], spaces=4, lspace=2):
-    div = " "*spaces
-    ldiv = " "*lspace
-
-    col_widths = [max(len(str(cell)) for cell in col) for col in zip(headers, *data)]
-
-    header_row = div.join(f"{header: <{width}}" for header, width in zip(headers, col_widths))
-    print("\n" + ldiv + header_row)
-
-    separator_row = div.join("-" * width for width in col_widths)
-    print(ldiv + separator_row)
-
-    for row in data:
-        row_str = div.join(f"{cell: <{width}}" for cell, width in zip(row, col_widths))
-        print(ldiv + row_str)
-
-    print()

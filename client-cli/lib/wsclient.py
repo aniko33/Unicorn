@@ -35,9 +35,11 @@ class WSClientSession:
                 case "chat":
                     if not message["username"] == self.username:
                         self.MAIL_COUNT += 1
-                        self.MESSAGES.append(message)
                         
                         messages.info("New message arrived:", self.MAIL_COUNT)
+
+                    self.MESSAGES.append(message)
+
                 case "job":
                     if message["job"] in self.JOBS:
                         if message["success"]:

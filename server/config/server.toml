@@ -8,12 +8,12 @@ memory_limit = -1 # in bytes, -1 for ignore memory limit
 [rest-server]
 ip = "0.0.0.0"
 port = 3333
-ssl = false
+ssl = true
 
 [websocket-server]
 ip = "0.0.0.0"
 port = 3131
-ssl = false
+ssl = true
 
 [listener-alpha]
 type = "default"

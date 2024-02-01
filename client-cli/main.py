@@ -4,8 +4,12 @@ from lib import wsclient
 
 import sys
 import getpass
+import warnings
 
+from urllib3.exceptions import InsecureRequestWarning
 from hashlib import sha256
+
+warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 def server_connection(host: str, username: str, password: str, ssl=False) -> bool:
     if ssl:
@@ -45,9 +49,10 @@ def main(argc: int, argv: list[str]):
 
         quit(1)
 
-    elif argc > 4:
+    elif argc > 3:
         if argv[3] != "--ssl":
             print(argv[3], "is a invalid argument")
+            return
         
         else:
             ssl_enabled = True
@@ -70,14 +75,15 @@ def main(argc: int, argv: list[str]):
                 continue
 
             cmd: str = args[0]
+
             if cmd.startswith(tuple(cli.SPECIAL_PREFIX.values())):
                 cmd = cli._from_special_case(cmd)
+            else:
+                cmd = cli._to_command_case(cmd)
 
-            func = getattr(commands, cmd)
-            func(*args[1:])
-
-        except AttributeError:
-            continue
+            if cmd in dir(commands):
+                func = getattr(commands, cmd)
+                func(*args[1:])
 
         except (KeyboardInterrupt, EOFError):
             if len(cli.preinput()) <= 0:
