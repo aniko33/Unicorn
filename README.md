@@ -28,7 +28,7 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 > Written in Rust
 
 ### TODO - Agent
-- [ ] commands
+- [X] commands
 - [ ] persistence
 - [ ] injectable commads
 - [ ] process injection
@@ -47,7 +47,7 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 
 ### TODO - Client (CLI - GUI)
 - [ ] manage agents
-- [ ] sending commands
+- [X] sending commands
 - [ ] inject shellcode
 - [ ] local tools
 - [X] clients chat
