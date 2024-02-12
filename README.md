@@ -11,6 +11,7 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 
 </div>
 
+
 ### Client (CLI)
 
 > Written in Python
@@ -25,21 +26,11 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 
 ### Agent (DeltaAgent)
 
-> Written in Rust
-
-### TODO - Agent
-- [X] commands
-- [ ] persistence
-- [ ] injectable commads
-- [ ] process injection
-- [ ] clean code
-- [ ] optimization
-
 ### TODO - Server
 - [X] multiple listeners and dynamic addition
 - [ ] low resource usage
 - [ ] better "multi-player"
-- [ ] payload generation
+- [X] payload generation
 - [ ] proxy server for pivoting
 - [X] clients chat
 - [ ] sync client chat
@@ -55,3 +46,6 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 - [ ] more colorful and beautiful :3
 - [ ] custom scripts
 - [ ] GUI in Rust with Tauri
+
+## Showcase
+https://github.com/aniko33/Unicorn/assets/76649588/5752b2dc-367d-4751-b588-3141304cd1ca
