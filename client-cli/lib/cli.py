@@ -62,8 +62,7 @@ def preinput() -> str:
 
 
 def iinput() -> tuple:
-    # todo: fix '"\033[0m"'
-    prompt = legacy_ansistr("unicorn", 4) + "\033[0m"
+    prompt = legacy_ansistr("unicorn", 4)
 
     if len(commands.TARGET) > 0:
         ip, port = commands.TARGET[1].split(':')

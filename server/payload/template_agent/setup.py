@@ -27,8 +27,7 @@ class Config(payconf.Config):
         #  == >> [ STOP WRITING TEMPLATE ] << ==
 
         # compiling
-        subprocess.run(["sh", "-c", "clang include/*.c -Iinclude -c"], cwd=self.path)
-        subprocess.run(["sh", "-c", f"clang *.o main.c -o {self.output} -Iinclude"], cwd=self.path)
+        subprocess.run(["sh", "-c", f"clang -o {self.output} main.c include/*.c -Iinclude"], cwd=self.path)
         
         # remove obj files
         for f in listdir(self.path):
