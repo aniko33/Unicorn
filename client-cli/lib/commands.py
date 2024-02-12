@@ -30,6 +30,7 @@ def _get_agents() -> dict:
 
     return r.json()
 
+
 def _get_listeners() -> dict:
     r = HTTP_SESSION.get(HTTP_POINT + "/get_listeners/" + SESSION_ID)
 
@@ -47,8 +48,8 @@ def Get_agents(*args):
         errorf("No agents connected")
         return
 
-    ascii_table(["ID", "Host"], agents)
-
+    table = ascii_table(["ID", "Host"], agents, start_end="\n")
+    printf(table, end="")
 
 
 def Connect(*args):
@@ -68,23 +69,74 @@ def Connect(*args):
 
     alertf(f"Agent with ID {id_target} not found.")
 
+
 def Cmd_exec(*args):
     if len(args) < 1:
         print("cmd_exec <command>")
         return
-    
+
     if len(TARGET) <= 0:
         alertf("No target selected")
         return
 
-    r = HTTP_SESSION.post(HTTP_POINT + "/send_command", json={"auth": SESSION_ID, "target": TARGET[0], "cmd": args[0]})
-    
+    WSCONNECTION.send_command(args[0], TARGET[0])
+
+
+def Payload_config(*args):
+    if len(args) < 1:
+        infof("payload_config <payload>")
+        return
+
+    payload_name = args[0]
+
+    r = HTTP_SESSION.post(
+        HTTP_POINT + "/payload_config",
+        json={"auth": SESSION_ID, "payload": payload_name},
+    ).json()
+
+    for i in range(len(r)):
+        r[i][1] = str(r[i][1])
+
+    table = ascii_table(["Config", "Required"], r, start_end="\n")
+    printf(table, end="")
+
+
+def Payload_gen(*args):
+    if len(args) < 2:
+        infof("payload_gen <payload> <output_file> [...option=value]")
+        return
+
+    payload_name = args[0]
+    payload_output = args[1]
+    payload_configs = args[2:]
+
+    payload_configs_dict = {}
+
+    for config in payload_configs:
+        key, value = config.split("=")
+        payload_configs_dict[key] = value
+
+    r = HTTP_SESSION.post(
+        HTTP_POINT + "/payload_generate",
+        json={
+            "payload": payload_name,
+            "output": payload_output,
+            "config": payload_configs_dict,
+            "auth": SESSION_ID,
+        },
+    )
+
+    infof("Output file:", r.text)
+
+
+def Payload_get(*args):
+    r = HTTP_SESSION.get(HTTP_POINT + "/payload_get/" + SESSION_ID)
+
     if r.status_code != 200:
         alertf(r.text)
     else:
-        job = r.json()["job"]
-        successf("Added new job:", job)
-        WSCONNECTION.JOBS.append(job)
+        payloads = r.json()
+        infof("Payloads:\n\t" + "\n\t".join(payloads))    
 
 def Listener_add(*args):
     if len(args) < 4:
@@ -98,26 +150,28 @@ def Listener_add(*args):
 
     r = HTTP_SESSION.post(
         HTTP_POINT + "/add_listener",
-        json={"auth": SESSION_ID, "name": name, "ip": ip, "port": port, "type": type})
+        json={"auth": SESSION_ID, "name": name, "ip": ip, "port": port, "type": type},
+    )
 
     if r.status_code != 200:
         alertf(r.text)
     else:
         successf("Listener added:", name)
 
-def Listeners_get(*args):
+
+def Listener_get(*args):
     listeners = _get_listeners()
 
     if len(listeners) <= 0:
         errorf("No listeners available")
         return
-    
-    ascii_table(["Name", "IP", "Port", "Type"], listeners)
+
+    table = ascii_table(["Name", "IP", "Port", "Type"], listeners, start_end="\n")
+    printf(table, end="")
 
 
 def Listener_type(*args):
-    r = HTTP_SESSION.get(
-        HTTP_POINT + "/listener_types/" + SESSION_ID)
+    r = HTTP_SESSION.get(HTTP_POINT + "/listener_types/" + SESSION_ID)
 
     if r.status_code != 200:
         alertf(r.text)
@@ -133,16 +187,28 @@ def Quit(*args):
     print(ansistr("Bye!", 1))
     os._exit(0)
 
+
+###################################
+#### Special prefix functions ####
+##################################
+
+
 def _slashmsg(*args):
     if len(args) < 1:
         print("/msg <text>")
         return
-    
+
     WSCONNECTION.send_chatmsg(" ".join(args))
+
 
 def _slashmail(*args):
     if len(WSCONNECTION.MESSAGES) > 0:
-        messages = ["\033[{}m {}\033[0m: {}".format(msg["color"], msg["username"], msg["message"]) for msg in WSCONNECTION.MESSAGES]
+        messages = [
+            "\033[{}m {}\033[0m: {}".format(
+                msg["color"], msg["username"], msg["message"]
+            )
+            for msg in WSCONNECTION.MESSAGES
+        ]
 
         pager("\n".join(messages))
     else:

@@ -5,10 +5,11 @@
 		},
 		{
 			"path": "client-cli"
-		},
-		{
-			"path": "testagent"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"stdlib.h": "c"
+		}
+	}
 }

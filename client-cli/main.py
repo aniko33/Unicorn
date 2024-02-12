@@ -38,6 +38,8 @@ def server_connection(host: str, username: str, password: str, ssl=False) -> boo
     commands.USERNAME = username
     commands.WSCONNECTION = wsclient.init_connection(websocket_addr)
 
+    commands.WSCONNECTION.sync_chat()
+
     return True
 
 def main(argc: int, argv: list[str]):

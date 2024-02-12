@@ -1,5 +1,4 @@
 import socket
-import time
 import json
 import asyncio
 
@@ -18,7 +17,6 @@ class ConnectionTunnel(ABC):
 
         self.addr = addr[0] + ":" + str(addr[1])
 
-        # Thread(target=self.__stayalive).start()
         Thread(target=self.__broadcast).start()
     
     @abstractmethod
@@ -33,38 +31,15 @@ class ConnectionTunnel(ABC):
     def recv(self, __bufsize: int) -> bytes:
         return self.connection.recv(__bufsize)
     
-    def __stayalive(self):
-        is_alive = True
-
-        while is_alive:
-            time.sleep(10)
-
-            try:
-                self.send(b"2")
-                data = self.connection.recv(16, socket.MSG_DONTWAIT | socket.MSG_PEEK)
-
-                if len(data) == 0:
-                    is_alive = False
-            
-            except ConnectionResetError:
-                is_alive = False
-
-            except BrokenPipeError:
-                is_alive = False
-
-            except BlockingIOError:
-                ...
-        
-        if not is_alive:
-            agents.pop(self.agent_id)
-
     def __broadcast(self):
         while True:
             r = self.recv(1024)
             if len(r) <= 0:
                 self.connection.close()
                 agents.pop(self.agent_id)
+                return
 
             r = json.loads(r)
+
             for connection in clients_wsocket:
                 asyncio.run(connection.send(wresponse(r, "job")))
