@@ -1,6 +1,7 @@
+from ast import arg
 from stone_color.messages import *
 from stone_color.tables import ascii_table
-from stone_color.color import ansistr
+from stone_color.color import ansistr, DefaultLegacyColors
 
 import requests as requests
 import os as os
@@ -213,3 +214,14 @@ def _slashmail(*args):
         pager("\n".join(messages))
     else:
         errorf("No messages found")
+
+def _slashchange_color(*args):
+    if len(args) < 1:
+        infof("/change_color")
+        return
+
+    if args[0] in [f for f in dir(DefaultLegacyColors) if not f.startswith("__")]:
+        s = getattr(DefaultLegacyColors, args[0])
+        printf(s.encode())
+        color_n = re.search(r'\033\[(\d+)m', s).group(1)
+        WSCONNECTION.color = color_n
