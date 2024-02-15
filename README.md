@@ -9,8 +9,6 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 
 <img src=".img/logo.jpg" width=40%>
 
-![Unicorn.mp4](.img/unicorn.mp4)
-
 </div>
 
 
@@ -26,8 +24,6 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 
 <img src=".img/server.png">
 
-### Agent (DeltaAgent)
-
 ### TODO - Server
 - [X] multiple listeners and dynamic addition
 - [ ] low resource usage
@@ -35,14 +31,14 @@ Authors: [@aniko33](https://github.com/aniko33), [@UnityTheCoder](https://github
 - [X] payload generation
 - [ ] proxy server for pivoting
 - [X] clients chat
-- [ ] sync client chat
+- [X] sync client chat
 - [ ] remote tools
 
 ### TODO - Client (CLI - GUI)
 - [ ] manage agents
 - [X] sending commands
 - [ ] inject shellcode
-- [ ] local tools
+- [X] local tools
 - [X] clients chat
 - [ ] dynamic command additon for GNU-readline
 - [ ] more colorful and beautiful :3

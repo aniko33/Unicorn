@@ -1,4 +1,5 @@
 from lib.vglobals.servercfg import *
+from lib.vglobals.serverpath import DIST_PATH
 from lib.vglobals.sharedvars import listeners_threads, listeners
 from lib.globals import listeners_available
 
@@ -10,6 +11,7 @@ import handler
 import wserver
 
 import time
+import os
 import resource
 
 # Set memory limit
@@ -36,6 +38,10 @@ def loop_check_thread_listeners():
         time.sleep(0.5)
 
 def main():
+    # [ Create dist directory IF not exist ]
+    if not os.path.exists(DIST_PATH):
+        os.mkdir(DIST_PATH)
+
     for listener in listeners:
         ip = listeners[listener]["ip"]
         port = listeners[listener]["port"]

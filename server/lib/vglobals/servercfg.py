@@ -28,4 +28,5 @@ REST_ENABLE_SSL: bool = config["rest-server"]["ssl"]
 
 WEBSOCKET_SERVER_IP: str = config["websocket-server"]["ip"]
 WEBSOCKET_SERVER_PORT: int = config["websocket-server"]["port"]
+WEBSOCKET_SERVER_REDIRECT: int = config["websocket-server"]["redirect"]
 WEBSOCKET_ENABLE_SSL: bool = config["websocket-server"]["ssl"]

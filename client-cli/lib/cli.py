@@ -8,7 +8,7 @@ import readline
 
 CURRENT_PATH = "/".join(__file__.split("/")[:-2])
 HISTORY_PATH = path.join(CURRENT_PATH, ".history")
-SPECIAL_PREFIX = {"_dot": ".", "_slash": "/", "_colon": ":"}
+SPECIAL_PREFIX = {"_dot": ".", "_slash": "/", "_colon": ":", "_dot": "."}
 
 if not path.exists(HISTORY_PATH):
     open(HISTORY_PATH, "w").close()

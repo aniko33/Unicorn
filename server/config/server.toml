@@ -13,6 +13,7 @@ ssl = true
 [websocket-server]
 ip = "0.0.0.0"
 port = 3131
+redirect = "ws://127.0.0.1:3131"
 ssl = true
 
 [listener-alpha]

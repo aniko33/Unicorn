@@ -1,14 +1,14 @@
-from ast import arg
 from stone_color.messages import *
 from stone_color.tables import ascii_table
 from stone_color.color import ansistr, DefaultLegacyColors
 
 import requests as requests
-import os as os
+import importlib
+import os
 from pydoc import pager
 
 
-# == Constants
+# [ Constants ]
 
 TARGET = []  # [ID, host]
 HTTP_SESSION = requests.session()
@@ -16,6 +16,11 @@ HTTP_POINT = ""
 WSCONNECTION = None
 USERNAME = ""
 SESSION_ID = ""
+
+tools = [os.path.splitext(tool)[0] for tool in os.listdir("tools") if (not tool.startswith("_")) & tool.endswith(".py") ]
+
+for tool in tools:
+    globals()["_dot"+tool] = getattr(importlib.import_module("tools."+tool), "main")
 
 ##########################################################
 ######## Commands functions start with UPPERCASE #########
@@ -139,6 +144,36 @@ def Payload_get(*args):
         payloads = r.json()
         infof("Payloads:\n\t" + "\n\t".join(payloads))    
 
+def Payload_files(*args):
+    r = HTTP_SESSION.get(HTTP_POINT + "/payload_files/" + SESSION_ID).json()
+
+    if len(r) <= 0:
+        errorf("No payloads found")
+        return
+    
+    successf("Payload files:", ", ".join(r))
+
+def Payload_download(*args):
+    if len(args) < 2:
+        infof("payload_download <payload_file> <dest>")
+        return
+    
+    payload_file = args[0]
+    dest_path = args[1]
+    
+    if os.path.isdir(dest_path):
+        dest_path = os.path.join(dest_path, payload_file)
+    
+    r = HTTP_SESSION.post(HTTP_POINT + "/payload_download/" + SESSION_ID, json={"filename": payload_file}, stream=True)
+    if r.status_code != 200:
+        errorf(r.text)
+        return
+    
+    with open(dest_path, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=16*1024):
+            successf(f"[Download] {payload_file} :: {len(chunk)}")
+            f.write(chunk)
+
 def Listener_add(*args):
     if len(args) < 4:
         infof("listener_add <name> <ip> <port> <type>")
@@ -169,7 +204,6 @@ def Listener_get(*args):
 
     table = ascii_table(["Name", "IP", "Port", "Type"], listeners, start_end="\n")
     printf(table, end="")
-
 
 def Listener_type(*args):
     r = HTTP_SESSION.get(HTTP_POINT + "/listener_types/" + SESSION_ID)
@@ -222,6 +256,5 @@ def _slashchange_color(*args):
 
     if args[0] in [f for f in dir(DefaultLegacyColors) if not f.startswith("__")]:
         s = getattr(DefaultLegacyColors, args[0])
-        printf(s.encode())
         color_n = re.search(r'\033\[(\d+)m', s).group(1)
         WSCONNECTION.color = color_n

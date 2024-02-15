@@ -1,5 +1,6 @@
 from lib.vglobals.servercfg import *
 from lib.vglobals.sharedvars import *
+from lib.vglobals.serverpath import DIST_PATH
 from lib.globals import refresh_available_listeners, listeners_available
 
 from lib.sthread import Sthread
@@ -37,7 +38,7 @@ def login():
 
     clients_session[username] = session_uuid
 
-    return jsonify({"session": session_uuid, "wsaddr": "ws://{}:{}".format(WEBSOCKET_SERVER_IP, WEBSOCKET_SERVER_PORT)})
+    return jsonify({"session": session_uuid, "wsaddr": WEBSOCKET_SERVER_REDIRECT})
 
 
 @app.route("/get_agents/<session>")
@@ -117,8 +118,6 @@ def payload_generate():
     if not session in list(clients_session.values()):
         return response.invalid_sessionid
 
-    # ...
-
     payload_name: str = request.json["payload"]
     payload_output: str = request.json["output"]
     
@@ -155,15 +154,25 @@ def payload_generate():
 
 @app.route("/payload_download/<session>", methods=["POST"])
 def payload_download(session):
+    if request.json is None:
+        return response.json_body_empty
+    
     if not session in list(clients_session.values()):
         return response.invalid_sessionid
     
-    payload_filename = path.join("payload", request.form["filename"])
+    payload_filename = path.join(DIST_PATH, path.basename(request.json["filename"]))
     
     if not path.exists(payload_filename):
         return response.payload_not_found
     
     return send_file(payload_filename) 
+
+@app.route("/payload_files/<session>", methods=["GET"])
+def payload_files(session):
+    if not session in list(clients_session.values()):
+        return response.invalid_sessionid
+    
+    return jsonify(listdir(DIST_PATH))
 
 @app.route("/payload_get/<session>")
 def payload_get(session):
