@@ -31,7 +31,7 @@ class ConnectionTunnel(ABC):
     def recv(self, __bufsize: int) -> bytes:
         return self.connection.recv(__bufsize)
     
-    def __broadcast(self):
+    def __broadcast(self): # TODO: implement auto-add comamnd (client), upload, download
         while True:
             r = self.recv(1024)
             if len(r) <= 0:

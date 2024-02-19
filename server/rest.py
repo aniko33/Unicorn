@@ -7,15 +7,39 @@ from lib.sthread import Sthread
 from lib import response
 
 from flask import Flask, request, jsonify, send_file
-from hashlib import sha256
-from os import listdir
-from uuid import uuid4
-from importlib import import_module
 from inspect import _empty, signature as func_signature
+from functools import wraps
+
+import hashlib
+import os
+import uuid
+import importlib
 
 from handler import run as handler_run
 
 app = Flask(__name__)
+
+def check_sessionid(session: str) -> None | tuple:
+    if not session in list(clients_session.values()):
+        return response.invalid_sessionid
+
+def reserved_api(func):
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        if (len(args) <= 0) and (request.is_json is None):
+            return response.json_body_empty
+        
+        session = request.json["auth"] or args[0]
+
+        if session is None:
+            return response.sessionid_not_found
+
+        if not session in list(clients_session.values()):
+            return response.invalid_sessionid
+        else:
+            return func(*args, **kwargs) 
+    
+    return decorated
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -28,13 +52,13 @@ def login():
     if not username in WHITELIST:
         return response.username_is_not_whitelisted
 
-    orginal_password = sha256(
+    orginal_password = hashlib.sha256(
         WHITELIST[username].encode()).hexdigest()
 
     if password != orginal_password:
         return response.invalid_password
 
-    session_uuid = uuid4().hex
+    session_uuid = uuid.uuid4().hex
 
     clients_session[username] = session_uuid
 
@@ -43,10 +67,10 @@ def login():
 
 @app.route("/get_agents/<session>")
 def get_agents(session: str):
-    agents_row = []
+    iserr = check_sessionid(session)
+    if iserr: return iserr
 
-    if not session in list(clients_session.values()):
-        return response.invalid_sessionid
+    agents_row = []
 
     for agent in agents:
         addr = agents[agent].addr
@@ -56,15 +80,8 @@ def get_agents(session: str):
 
 
 @app.route("/add_listener", methods=["POST"])
+@reserved_api
 def add_listener():
-    if request.json is None:
-        return response.json_body_empty
-
-    session: str = request.json["auth"]
-
-    if not session in list(clients_session.values()):
-        return response.invalid_sessionid
-
     listener_type = request.json["type"]
 
     refresh_available_listeners()
@@ -86,10 +103,10 @@ def add_listener():
 
 @app.route("/get_listeners/<session>")
 def get_listeners(session: str):
+    iserr = check_sessionid(session)
+    if iserr: return iserr
+    
     listeners_row = []
-
-    if not session in list(clients_session.values()):
-        return response.invalid_sessionid
 
     for listener_name in listeners:
         listener = listeners[listener_name]
@@ -103,21 +120,14 @@ def get_listeners(session: str):
 
 @app.route("/listener_types/<session>")
 def get_listeners_types(session: str):
-    if not session in list(clients_session.values()):
-        return response.invalid_sessionid
+    iserr = check_sessionid(session)
+    if iserr: return iserr
     
     return jsonify(listeners_available)
 
 @app.route("/payload_generate", methods=["POST"])
+@reserved_api
 def payload_generate():
-    if request.json is None:
-        return response.json_body_empty
-    
-    session: str = request.json["auth"]
-
-    if not session in list(clients_session.values()):
-        return response.invalid_sessionid
-
     payload_name: str = request.json["payload"]
     payload_output: str = request.json["output"]
     
@@ -134,7 +144,7 @@ def payload_generate():
         return response.payload_not_found
 
     payload_path = "/".join(("payload", payload_name))
-    payload_builder = import_module(".".join(("payload", payload_name, "setup")))
+    payload_builder = importlib.import_module(".".join(("payload", payload_name, "setup")))
     config_obj = getattr(payload_builder, "Config")
 
     line_parameters = []
@@ -154,11 +164,8 @@ def payload_generate():
 
 @app.route("/payload_download/<session>", methods=["POST"])
 def payload_download(session):
-    if request.json is None:
-        return response.json_body_empty
-    
-    if not session in list(clients_session.values()):
-        return response.invalid_sessionid
+    iserr = check_sessionid(session)
+    if iserr: return iserr
     
     payload_filename = path.join(DIST_PATH, path.basename(request.json["filename"]))
     
@@ -169,34 +176,27 @@ def payload_download(session):
 
 @app.route("/payload_files/<session>", methods=["GET"])
 def payload_files(session):
-    if not session in list(clients_session.values()):
-        return response.invalid_sessionid
+    iserr = check_sessionid(session)
+    if iserr: return iserr
     
-    return jsonify(listdir(DIST_PATH))
+    return jsonify(os.listdir(DIST_PATH))
 
 @app.route("/payload_get/<session>")
 def payload_get(session):
-    if not session in list(clients_session.values()):
-        return response.invalid_sessionid
-    
-    return listdir(path.join("payload"))
+    iserr = check_sessionid(session)
+    if iserr: return iserr
+
+    return os.listdir(path.join("payload"))
 
 @app.route("/payload_config", methods=["POST"])
+@reserved_api
 def payload_config():
-    if request.json is None:
-        return response.json_body_empty
-    
-    session: str = request.json["auth"]
-
-    if not session in list(clients_session.values()):
-        return response.invalid_sessionid
-
     payload_name: str = request.json["payload"]
 
     if not path.exists(path.join("payload", payload_name)):
         return response.payload_not_found
     
-    payload_builder = import_module(".".join(("payload", payload_name, "setup")))
+    payload_builder = importlib.import_module(".".join(("payload", payload_name, "setup")))
     config_obj = getattr(payload_builder.Config, "run")
 
     parameters = [] # name, is_required
@@ -216,3 +216,5 @@ def run(ip: str, port: int, ssl=False, ssl_context=()):
         app.run(ip, port, ssl_context=ssl_context)
     else:
         app.run(ip, port)
+
+# TODO: add disconnect agent, get number of connection

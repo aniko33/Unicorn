@@ -2,7 +2,6 @@ from lib import commands
 
 from stone_color.color import ansistr, legacy_ansistr
 from os import path
-from pydoc import pager
 
 import readline
 
@@ -63,6 +62,9 @@ def preinput() -> str:
 
 def iinput() -> tuple:
     prompt = legacy_ansistr("unicorn", 4)
+
+    if commands.WSCONNECTION.MAIL_COUNT > 0:
+        prompt += " \033[31m!\033[0m"
 
     if len(commands.TARGET) > 0:
         ip, port = commands.TARGET[1].split(':')

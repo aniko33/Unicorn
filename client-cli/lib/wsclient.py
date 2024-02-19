@@ -7,8 +7,6 @@ from websockets import exceptions as websocket_exceptions
 import json
 import random
 
-# TODO: command sending
-
 class WSClientSession:
     def __init__(self, websocket_connection: client.ClientConnection) -> None:
         from lib.commands import SESSION_ID, USERNAME as username
@@ -49,8 +47,6 @@ class WSClientSession:
                 case "chat":
                     if not message["username"] == self.username:
                         self.MAIL_COUNT += 1
-                        
-                        infof("New message arrived:", self.MAIL_COUNT)
 
                     # Remove useless information
                     message.pop("status")

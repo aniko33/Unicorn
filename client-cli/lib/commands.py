@@ -17,7 +17,9 @@ WSCONNECTION = None
 USERNAME = ""
 SESSION_ID = ""
 
-tools = [os.path.splitext(tool)[0] for tool in os.listdir("tools") if (not tool.startswith("_")) & tool.endswith(".py") ]
+# [ Add tools ]
+
+tools = [os.path.splitext(tool)[0] for tool in os.listdir("tools") if (not tool.startswith("_")) & tool.endswith(".py")]
 
 for tool in tools:
     globals()["_dot"+tool] = getattr(importlib.import_module("tools."+tool), "main")
@@ -246,6 +248,8 @@ def _slashmail(*args):
         ]
 
         pager("\n".join(messages))
+
+        WSCONNECTION.MAIL_COUNT = 0
     else:
         errorf("No messages found")
 
