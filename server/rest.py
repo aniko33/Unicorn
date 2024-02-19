@@ -73,11 +73,10 @@ def get_agents(session: str):
     agents_row = []
 
     for agent in agents:
-        addr = agents[agent].addr
+        addr = agents[agent]["connection"].addr
         agents_row.append([agent, addr])
 
     return jsonify(agents_row)
-
 
 @app.route("/add_listener", methods=["POST"])
 @reserved_api

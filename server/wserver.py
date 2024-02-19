@@ -35,11 +35,11 @@ async def send_command_to_agent(websocket: server.WebSocketServerProtocol, cmd_e
     if not target_id in list(agents.keys()):
         await websocket.send(wresponse("Agent not found", "error", 500))
     
-    agent = agents[target_id]
+    agent_connection = agents[target_id]["connection"]
 
     job_n = len(jobs.keys()) + 1
 
-    agent.send(json.dumps({"exec": cmd_exec, "job": job_n}).encode())
+    agent_connection.send_command(cmd_exec, job_n)
 
     jobs[job_n] = None
 

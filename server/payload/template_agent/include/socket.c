@@ -60,20 +60,21 @@ char* frecv(int fd, int buffer_size) {
   return buffer;
 }
 
-long send_response(int client_fd, char* output, bool success, int job) {
-  cJSON *json = cJSON_CreateObject();
-  cJSON_AddBoolToObject(json, "success", true);
-  cJSON_AddStringToObject(json, "output", output);
-  cJSON_AddNumberToObject(json, "job", job);
+int sendall(int socket_fd, const char *buffer, size_t length, int flags) {
+    size_t total_sent = 0;
 
-  char* json_str = cJSON_Print(json);
+    while (total_sent < length) {
+        ssize_t sent = send(socket_fd, buffer + total_sent, length - total_sent, flags);
+        if (sent == -1) {
+            return -1;
+        } else if (sent == 0) {
+            return -1;
+        }
 
-  long status = send_str(client_fd, json_str);
+        total_sent += sent;
+    }
 
-  cJSON_free(json_str);
-  cJSON_Delete(json);
-
-  return status;
+    return 0; 
 }
 
 cJSON* recv_json(int client_fd, int n_byte) {

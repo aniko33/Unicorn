@@ -37,7 +37,7 @@ void generate_id(char *out, int length) {
 
 int command_exists(Command *commands_array, char *func_name, int arraylen) {
   for (int i = 0; i < arraylen; i++) {
-    if (strcmp(commands_array[i].name, func_name)) {
+    if (!(strcmp(commands_array[i].name, func_name))) {
       return i;
     }
   }
@@ -52,13 +52,21 @@ void cmds_execution(int client_fd, Command *commands, int commands_len) {
 
     cJSON *cmd_json = cJSON_Parse(cmd); // heap allocation
 
-    char *cmd = cJSON_GetObjectItem(cmd_json, "exec")->string;
+    char *cmd = cJSON_GetObjectItem(cmd_json, "exec")->valuestring;
     int job = cJSON_GetObjectItem(cmd_json, "job")->valueint;
 
-    int index;
+    int index = command_exists(commands, cmd, commands_len);
 
-    if ((index = command_exists(commands, cmd, commands_len)) < 0) {
-      send_response(client_fd, "", false, job);
+    if (index < 0) {
+      cJSON *response = cJSON_CreateObject();
+      cJSON_AddStringToObject(response, "output", "");
+      cJSON_AddBoolToObject(response, "success", 0);
+      cJSON_AddNumberToObject(response, "job", job);
+      cJSON_AddStringToObject(response, "type", "cmdout");
+
+      send_str(client_fd, cJSON_Print(response));
+
+      cJSON_Delete(response);
     } else {
       commands[index].func(client_fd, job);
     }
@@ -72,6 +80,7 @@ int main() {
   int commands_length = 0;
   Command commands[] = {
       {.name = "ping", .func = cmd_ping},
+      {.name = "download", .func = test_download},
   };
 
   for (; commands[commands_length].name[0] != '\0'; commands_length++) {
