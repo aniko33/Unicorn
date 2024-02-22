@@ -5,6 +5,9 @@ key = "domain.key"
 [resources]
 memory_limit = -1 # in bytes, -1 for ignore memory limit
 
+[jwt]
+key = "jwt.key"
+
 [rest-server]
 ip = "0.0.0.0"
 port = 3333
