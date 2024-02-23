@@ -10,5 +10,10 @@ app.register_blueprint(auth_app)
 app.register_blueprint(payload_app)
 app.register_blueprint(listener_app)
 
-def run():
-    app.run()
+def run(ip: str, port: int, ssl=False, ssl_context=()):
+    if ssl:
+        app.run(ip, port, ssl_context=ssl_context)
+    else:
+        app.run(ip, port)
+
+# TODO-LATER: add disconnect agent, get number of connection

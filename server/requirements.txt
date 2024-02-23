@@ -1,3 +1,4 @@
 flask
 rsa
 pyjwt
+websockets

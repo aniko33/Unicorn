@@ -1,6 +1,7 @@
 from sthread import Sthread
 from .config import config
 from .paths import LISTENERS_PATH
+import handler
 
 import os
 
@@ -35,7 +36,7 @@ def add_new_listener(
 
     listeners[name] = {"ip": ip, "port": port, "type": type}
 
-    thread = Sthread(target=handler_run, args=(ip, port, type))
+    thread = Sthread(target=handler.run, args=(ip, port, type))
 
     listeners_threads[name] = thread
 
