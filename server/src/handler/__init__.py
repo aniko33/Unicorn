@@ -1,13 +1,17 @@
-import logger
-
+from os import path
+import importlib.util
 import socket
 
-from importlib import import_module
+from core.paths import LISTENERS_PATH
+import logger
 
 BUFFER = 1024
 
 def use_listener(listener: str):
-    return import_module("listeners." + listener)
+    spec = importlib.util.spec_from_file_location(listener, path.join(LISTENERS_PATH, listener + ".py"))
+    listener_loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(listener_loaded)
+    return listener_loaded
 
 def run(ip: str, port: int, listener_type: str):
     module = use_listener(listener_type)

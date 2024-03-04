@@ -39,7 +39,7 @@ def start_listener(ip, port, type):
     thandler.start()
 
 def start_listeners():
-    for listener, params in listeners.items():
+    for _, params in listeners.items():
         start_listener(params["ip"], params["port"], params["type"])
 
     Sthread(target=loop_check_thread_listeners).start()

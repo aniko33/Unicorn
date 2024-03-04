@@ -18,7 +18,7 @@ def get_jwtpubkey(base64_encode=False) -> rsa.PublicKey:
     with open(KEY_PATH, "rb") as k:
         priv_key = rsa.PrivateKey.load_pkcs1(k.read())
 
-    pub_key = rsa.PublicKey(priv_key.n, priv_key.e)  # Make public key from private key
+    pub_key = rsa.PublicKey(priv_key.n, priv_key.e)  # Extract public key from private key
 
     if base64_encode:
         pub_key = base64.b64encode(pub_key)

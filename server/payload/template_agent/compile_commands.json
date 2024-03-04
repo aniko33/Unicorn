@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "/home/aniko/Documents/code/malware/Unicorn/testagent",
+    "arguments": ["clang",  "main.c", "-Iinclude", "include/socket.c", "include/cJSON.c"],
+    "file": "main.c"
+  }
+]

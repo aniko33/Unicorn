@@ -4,7 +4,7 @@ import uuid
 import hashlib
 
 from . import response
-from core.client import clients, get_user_logged, ClientSession
+from core.client import token_exist, clients, get_user_logged, ClientSession
 from core.config import StructWebsocket
 from core.config import StructGeneric
 import jwt_auth
@@ -17,12 +17,12 @@ def reserved_api(func):
         key = request.headers.get("key")
 
         if not key:
-            return response.sessionid_not_found
+            return response.token_not_found
         
-        if not key in list(clients.values()):
-            return response.invalid_sessionid
-        else:
-            return func(*args, **kwargs) 
+        if not token_exist(key):
+            return response.invalid_token
+
+        return func(*args, **kwargs)
     
     return decorated
 
@@ -55,4 +55,8 @@ def login():
     
     clients[token] = ClientSession(username, session_id)
 
-    return jsonify({"token": token, "wsaddr": StructWebsocket.WEBSOCKET_SERVER_REDIRECT})
+    # [ Encrypt in RSA the JWT token and return them ]
+
+    token_encrypted = jwt_auth.encrypt_jwt(token)
+
+    return jsonify({"token": token_encrypted, "wsaddr": StructWebsocket.WEBSOCKET_SERVER_REDIRECT})
